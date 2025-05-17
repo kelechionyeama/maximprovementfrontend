@@ -37,7 +37,9 @@ const SettingsBottomSheet = ({ bottomSheetRef }: { bottomSheetRef: any }) => {
                             More Stuff
                         </EPSBText>
 
-                        <Feather name="x" size={24} color="white" />
+                        <TouchableOpacity onPress={() => bottomSheetRef.current?.close()}>
+                            <Feather name="x" size={24} color="white" />
+                        </TouchableOpacity>
                     </View>
 
                     <View style={{ marginTop: 20 }}>

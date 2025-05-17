@@ -13,18 +13,20 @@ const PrivateMemoryBox = ({ privateMemoryBoxIsLocked }: { privateMemoryBoxIsLock
     React.useEffect(() => {
         if (privateMemoryBoxIsLocked) return;
 
-        Animated.sequence([
-            Animated.timing(firstOpacity, {
-                toValue: 1,
-                duration: 700,
-                useNativeDriver: true,
-            }),
-            Animated.timing(secondOpacity, {
-                toValue: 1,
-                duration: 700,
-                useNativeDriver: true,
-            }),
-        ]).start();
+        setTimeout(() => {
+            Animated.sequence([
+                Animated.timing(firstOpacity, {
+                    toValue: 1,
+                    duration: 700,
+                    useNativeDriver: true
+                }),
+                Animated.timing(secondOpacity, {
+                    toValue: 1,
+                    duration: 700,
+                    useNativeDriver: true
+                }),
+            ]).start();
+        }, 1000);
     }, [privateMemoryBoxIsLocked]);
 
 
@@ -33,7 +35,7 @@ const PrivateMemoryBox = ({ privateMemoryBoxIsLocked }: { privateMemoryBoxIsLock
             <View style={styles.container}>
                 <View style={styles.header}>       
                     <EPSBText style={{ fontSize: 20 }}>
-                        Private Memory
+                        MAX's Private Memory
                     </EPSBText>
 
                     <Image 
@@ -66,7 +68,7 @@ const PrivateMemoryBox = ({ privateMemoryBoxIsLocked }: { privateMemoryBoxIsLock
                 )}
             </View>
 
-            <EPRText style={[styles.text, { display: privateMemoryBoxIsLocked ? "flex" : "none" }]}>   
+            <EPRText style={[styles.text, { opacity: privateMemoryBoxIsLocked ? 1 : 0 }]}>   
                 Unlock to access <EPSBText>MAX's</EPSBText> private memory
             </EPRText>
         </>

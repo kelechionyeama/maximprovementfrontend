@@ -14,7 +14,7 @@ export const LoadingBubble = () => {
             duration: 500,
             useNativeDriver: true,
         }).start(() => {
-            setTimeout(() => setShowLottie(true), 700);
+            setTimeout(() => setShowLottie(true), 500);
         });
     }, []);
 

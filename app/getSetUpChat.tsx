@@ -1,6 +1,7 @@
 import { Button } from '@/components/Button';
+import OptionsSelector from '@/components/OptionsSelector';
 import PrivateMemoryBox from '@/components/PrivateMemoryBoxes';
-import { joinWithAnd, lowercaseFirst, wait } from '@/HelperFunctions';
+import { joinWithAnd, lowercaseFirst, leaveRating, wait } from '@/HelperFunctions';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from 'expo-router';
 import React from 'react';
@@ -13,6 +14,7 @@ import MaxText from '../components/chat/max';
 import YouText from '../components/chat/you';
 import { needHelpWith } from '../ExportedArrays';
 import { EPBText, EPMText } from '../StyledText';
+import { handleEnableFaceId } from '@/app/utils/faceIdAuth';
 
 interface ChatMessage {
     text: string;
@@ -21,7 +23,7 @@ interface ChatMessage {
     showPrivateMemoryBox?: boolean;
 };
 
-const Chat = () => {
+const GetSetUpChat = () => {
 
     const [chatConversation, setChatConversation] = React.useState<ChatMessage[]>([]);
     const [loading, setLoading] = React.useState(true);
@@ -32,19 +34,35 @@ const Chat = () => {
     const [showAdviceOptions, setShowAdviceOptions] = React.useState(false);
     const [showContinueButton, setShowContinueButton] = React.useState(true);
     const [showFamilyOptions, setShowFamilyOptions] = React.useState(false);
+    const [showPrivateMemoryBox, setShowPrivateMemoryBox] = React.useState(false);
 
     const [selectedOption, setSelectedOption] = React.useState<string[]>([]);
 
-    const [privateMemoryBoxIsLocked, setPrivateMemoryBoxIsLocked] = React.useState(false);
+    const [privateMemoryBoxIsLocked, setPrivateMemoryBoxIsLocked] = React.useState(true);
+    const [showUnlockButton, setShowUnlockButton] = React.useState(false);
+    const [showContinueAfterPrivateMemoryBox, setShowContinueAfterPrivateMemoryBox] = React.useState(false);
+    const [showRate5StarsButton, setShowRate5StarsButton] = React.useState(false);
+    const [showInnerRate5StarsButton, setShowInnerRate5StarsButton] = React.useState(true);
     
     const keyboardOpacity = React.useRef(new Animated.Value(0)).current;
     const buttonOpacity = React.useRef(new Animated.Value(0)).current;
     const optionOpacities = React.useRef(needHelpWith.map(() => new Animated.Value(0))).current;
     const familyOptionsOpacity = React.useRef(new Animated.Value(0)).current;
+    const privateMemoryBoxOpacity = React.useRef(new Animated.Value(0)).current;
 
     const navigation = useNavigation();
     const inputRef = React.useRef<TextInput>(null);
     const flatListRef = React.useRef<any>(null);
+
+    const text1 = "What's up, I'm Max! What's your name?";
+    const text2 = "Nice to meet you, " + userName.trim() + "!" + 
+                        "\n\nI was created by two guys who struggled with confidence in high school." + 
+                        "\n\nNow, I'm here to be the big brother they wish they had.";
+    const text3 = "Now tell me, what do you need help with?";
+    const text4 = "Got it—I'd focus on " + (selectedOption.length > 1 ? "those" : "that") + ". Are you open to talking about family matters too, or prefer not to?";
+    const text5 = "As we keep talking, I'll store stuff I know about you in my private memory.";
+    const text6 = "One last thing, " + userName.trim() + "—mind giving me 5 stars so others can find me?";
+    const text7 = "See you on the other side, " + userName.trim() + "\n\nArchiving this chat...";
 
 
     // HEADER NAVIGATION
@@ -60,7 +78,7 @@ const Chat = () => {
                 backgroundColor: "black"
             },
             contentStyle: {
-                borderWidth: 0.5,
+                borderWidth: 0.3,
                 borderTopColor: "white"
             }
         });
@@ -69,11 +87,10 @@ const Chat = () => {
 
     // SHOW FIRST MESSAGE AFTER 1.5 SECONDS
     React.useEffect(() => {
-        // SHOW FIRST MESSAGE AFTER 1.5 SECONDS
         (async () => {
-            await wait(2500);
+            await wait(1500);
             setMaxIsStreaming(true);
-            setChatConversation([{ text: "What's up, I'm Max! What's your name?", isUser: false }]);
+            setChatConversation([{ text: text1, isUser: false }]);
             setLoading(false);
         })();
     }, []);
@@ -90,30 +107,28 @@ const Chat = () => {
                 text: userName.trim(),
                 isUser: true
             }]);
-            
-            // SHOW LOADING STATE
-            setLoading(true);
-            
+
             // HIDE INPUT
             setShowInput(false);
+            
+            // SHOW LOADING STATE
+            await wait(500);  
+            setLoading(true);
             
             // AFTER 1.5 SECONDS, SHOW THE RESPONSE AND HIDE LOADING
             await wait(2500);     
             setChatConversation(prev => [...prev, { 
-                text: "Nice to meet you, " + userName.trim() + "!" + 
-                        "\n\nI was created by two guys who struggled with confidence in high school." + 
-                        "\n\nNow, I'm here to be the big brother they wish they had.",
+                text: text2,
                 isUser: false
             }]);
             setLoading(false);
-            setUserName("");
 
             // WAIT FOR MAXTEXT TO FINISH STREAMING BEFORE SHOWING BUTTON
             setMaxIsStreaming(true);
-            await wait(1000);
-
             setShowButton(true);
-            // ANIMATE BUTTON IN
+
+            await wait(1000);
+            // ANIMATE SOUNDS GOOD BUTTON IN
             Animated.timing(buttonOpacity, {
                 toValue: 1,
                 duration: 1000,
@@ -123,6 +138,7 @@ const Chat = () => {
     };
 
 
+    // HANDLE SOUNDS GOOD BUTTON PRESS
     const handleSoundsGood = async () => {
         setShowButton(false);
 
@@ -132,14 +148,15 @@ const Chat = () => {
             isUser: true
         }]);
 
-        setLoading(true);
-        
-        await wait(3000);
+        await wait(1000);
+
+        setLoading(true);       
+        await wait(2500);
 
         setChatConversation(prev => [
             ...prev,
             { 
-                text: "Now tell me, what exactly do you need advice on?",
+                text: text3,
                 isUser: false
             },
             {
@@ -153,6 +170,7 @@ const Chat = () => {
     };
 
 
+    // HANDLE CONTINUE BUTTON AFTER ADVICE OPTIONS ARE SELECTED
     const handleContinue = async () => {
         setShowContinueButton(false);
 
@@ -169,28 +187,34 @@ const Chat = () => {
             helpText = joinWithAnd(mappedOptions);
         }
 
-        setChatConversation(prev => [
-            ...prev,
+        setChatConversation(prev => [...prev,
             { 
                 text: "I need help with " + helpText,
                 isUser: true
             }
         ]);
 
+        await wait(200);
+        flatListRef.current?.scrollToEnd({ animated: true });
+
         setLoading(true);
+        await wait(200);
+        flatListRef.current?.scrollToEnd({ animated: true });
+
         await wait(1500);
 
-        setChatConversation(prev => [
-            ...prev,
+        setChatConversation(prev => [...prev,
             { 
-                text: "Got it—I'd focus on those. Are you open to talking about family too, or prefer not to?",
+                text: text4,
                 isUser: false
             }
         ]);
+
+        await wait(200);
         flatListRef.current?.scrollToEnd({ animated: true });
+
         setMaxIsStreaming(true);
         setLoading(false);
-        flatListRef.current?.scrollToEnd({ animated: true });
     };
 
 
@@ -206,15 +230,18 @@ const Chat = () => {
             }
         ]);
 
-        setLoading(true);
-        setShowFamilyOptions(false);
+        await wait(100);
+        flatListRef.current?.scrollToEnd({ animated: true });
 
+        setShowFamilyOptions(false);
+        setLoading(true);
+ 
         await wait(1500);
 
         setChatConversation(prev => [
             ...prev,
             {
-                text: "The more you share, the more I get you—and the better I can help",
+                text: text5,
                 isUser: false
             },
             {
@@ -223,12 +250,82 @@ const Chat = () => {
                 showPrivateMemoryBox: true
             }
         ]);
+
+        await wait(200);
+        flatListRef.current?.scrollToEnd({ animated: true });
+
         setMaxIsStreaming(true);
         setLoading(false);
-        flatListRef.current?.scrollToEnd({ animated: true });
     };
-    
 
+
+    // HANDLE UNLOCK WITH FACE ID
+    const handleUnlockWithFaceID = async () => {
+        const result = await handleEnableFaceId();
+        if (result.success) {
+            setPrivateMemoryBoxIsLocked(false);
+            setShowUnlockButton(false);
+
+            await wait(3000);
+            setShowContinueAfterPrivateMemoryBox(true);
+        };
+    };
+
+
+    // HANDLE CONTINUE AFTER VIEWING PRIVATE MEMORY BOX
+    const handleContinueAfterPrivateMemoryBox = async () => {
+        setLoading(true);
+        await wait(200);
+        flatListRef.current?.scrollToEnd({ animated: true });
+
+        setShowContinueAfterPrivateMemoryBox(false);
+
+        setChatConversation(prev => [...prev,
+            { 
+                text: text6,
+                isUser: false
+            }
+        ]);
+
+        await wait(200);
+        flatListRef.current?.scrollToEnd({ animated: true });
+
+        setMaxIsStreaming(true);
+        setLoading(false);
+    };
+
+
+    // HANDLE RATE 5 STARS BUTTON PRESS
+    const handleRate5Stars = async () => {
+        await leaveRating();
+        await wait(2000);
+        setShowInnerRate5StarsButton(false);
+    };
+
+
+    const handleIHaveRated = async () => {
+        setShowRate5StarsButton(false);
+
+        setLoading(true);
+        await wait(200);
+        flatListRef.current?.scrollToEnd({ animated: true });
+
+        setChatConversation(prev => [...prev,
+            { 
+                text: text7,
+                isUser: false
+            }
+        ]);
+
+        await wait(200);
+        flatListRef.current?.scrollToEnd({ animated: true });
+
+        setMaxIsStreaming(true);
+        setLoading(false);
+    };
+
+
+    // ANIMATE IN ADVICE OPTIONS
     const animateOptions = React.useCallback(() => {
         // ANIMATE ALL ITEMS WITH STAGGER
         Animated.stagger(100, 
@@ -254,6 +351,126 @@ const Chat = () => {
         };
     }, [showAdviceOptions, animateOptions]);
 
+    /**
+     * Handles completion of the first Max message:
+     * - Stops streaming animation
+     * - Shows the name input field
+     * - Animates the keyboard input into view
+     * - Focuses the input field
+     */
+    const handleFirstMaxComplete = () => {
+        setMaxIsStreaming(false);
+        setShowInput(true);
+        Animated.timing(keyboardOpacity, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true
+        }).start(async () => {
+            await wait(100);
+            inputRef?.current?.focus();
+        });
+    };
+
+    /**
+     * Handles completion of the advice question:
+     * - Stops streaming animation
+     * - Shows the advice options selector
+     */
+    const handleAdviceQuestionComplete = () => {
+        setMaxIsStreaming(false);
+
+        setShowAdviceOptions(true);
+    };
+
+    /**
+     * Handles completion of the family question:
+     * - Stops streaming animation
+     * - Shows the family options
+     * - Animates the family options into view
+     */
+    const handleFamilyQuestionComplete = async () => {
+        setMaxIsStreaming(false);
+
+        await wait(100);
+        flatListRef.current?.scrollToEnd({ animated: true });
+
+        setShowFamilyOptions(true);
+        Animated.timing(familyOptionsOpacity, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true
+        }).start();
+    };
+
+    /**
+     * Default completion handler:
+     * - Simply stops the streaming animation
+     */
+    const handleDefaultComplete = async () => {
+        setMaxIsStreaming(false);
+        await wait(100);
+        flatListRef.current?.scrollToEnd({ animated: true });
+    };
+
+    /**
+     * Determines which completion handler to use based on the message type:
+     * - First Max message: Shows name input
+     * - Advice question: Shows advice options
+     * - Family question: Shows family options
+     * - Default: Just stops streaming
+     */
+    const getOnCompleteHandler = (item: ChatMessage, index: number) => {
+        const isFirstMax = index === 0 && !item.isUser && !item.options;
+        const isAdviceQuestion = item.text.includes("Now tell me, what do you need help with?");
+        const isFamilyQuestion = item.text.includes("Are you open to talking about family");
+
+        if (isFirstMax) return handleFirstMaxComplete;
+        if (isAdviceQuestion) return handleAdviceQuestionComplete;
+        if (isFamilyQuestion) return handleFamilyQuestionComplete;
+        return handleDefaultComplete;
+    };
+
+
+    // ONLY SHOW THE BOX WHEN MAX IS STREAMING CHANGES TO FALSE AFTER THE FAMILY MESSAGE
+    React.useEffect(() => {
+        (async () => {
+            if (!maxIsStreaming && chatConversation.length > 0) {
+                const lastMessage = chatConversation[chatConversation.length - 1];
+
+                // SHOW PRIVATE MEMORY BOX
+                if (lastMessage.showPrivateMemoryBox) {
+                    await wait(100);
+                    flatListRef.current?.scrollToEnd({ animated: true });
+
+                    await wait(1000);
+
+                    setShowPrivateMemoryBox(true);
+
+                    Animated.timing(privateMemoryBoxOpacity, {
+                        toValue: 1,
+                        duration: 1000,
+                        useNativeDriver: true
+                    }).start();
+
+                    await wait(100);
+                    flatListRef.current?.scrollToEnd({ animated: true });
+
+                    setShowUnlockButton(true);
+                };
+
+                // SHOW RATE 5 STARS BUTTON
+                if (lastMessage.text.includes("One last thing")) {
+                    await wait(100);
+                    flatListRef.current?.scrollToEnd({ animated: true });
+
+                    await wait(1000);
+
+                    setShowRate5StarsButton(true);
+                };
+            };
+        })();
+    }, [maxIsStreaming]);
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -267,84 +484,53 @@ const Chat = () => {
                     data={chatConversation}
                     contentContainerStyle={styles.flatList}
                     showsVerticalScrollIndicator={false}
-                    style={{ marginBottom: 140, backgroundColor: "blue" }} 
+                    style={{ marginBottom: 140 }}
+                    ListFooterComponent={loading ? <LoadingBubble /> : null}
                     renderItem={({ item, index }) => {
                         if (item.showPrivateMemoryBox) {
-                            return <PrivateMemoryBox privateMemoryBoxIsLocked={privateMemoryBoxIsLocked} />;
-                        }
+                            if (!showPrivateMemoryBox) return null;
+
+                            return (
+                                <Animated.View style={{ opacity: privateMemoryBoxOpacity }}>
+                                    <PrivateMemoryBox privateMemoryBoxIsLocked={privateMemoryBoxIsLocked} />
+                                </Animated.View>
+                            );
+                        };
+                        
                         if (item.options) {
                             if (!showAdviceOptions) return null;
-                            return (
-                                <View style={{ marginBottom: 10 }}>
-                                    {item.options.map((option, idx) => (
-                                        <TouchableOpacity key={idx} onPress={() => {
-                                            if (selectedOption.includes(option)) {
-                                                setSelectedOption(selectedOption.filter(item => item !== option));
-                                            } else {
-                                                setSelectedOption([...selectedOption, option]);
-                                            }
-                                        }}>
-                                            <Animated.View style={[styles.needHelpWithWrapper, { opacity: optionOpacities[idx] }]}>
-                                                <EPMText style={{ fontSize: 16 }}>
-                                                    {option}
-                                                </EPMText>
 
-                                                <Ionicons name={selectedOption.includes(option) ? "checkmark-circle-sharp" : 
-                                                    "radio-button-off-outline"} size={24} color="white" />
-                                            </Animated.View>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
+                            return (
+                                <OptionsSelector
+                                    options={item.options}
+                                    selectedOptions={selectedOption}
+                                    onOptionSelect={(option) => {
+                                        if (selectedOption.includes(option)) {
+                                            setSelectedOption(selectedOption.filter(item => item !== option));
+                                        } else {
+                                            setSelectedOption([...selectedOption, option]);
+                                        }
+                                    }}
+                                    optionOpacities={optionOpacities}
+                                />
                             );
                         };
 
                         if (item.isUser) {
                             return <YouText text={item.text} />;
                         } else {
-                            // ONLY PASS ONCOMPLETE TO THE FIRST MAX MESSAGE
-                            const isFirstMax = index === 0 && !item.isUser && !item.options;
-                            const isAdviceQuestion = item.text.includes("Now tell me, what exactly do you need advice on?");
-                            const isFamilyQuestion = item.text.includes("Are you open to talking about family");
-                            return (
-                                <MaxText
-                                    text={item.text}
-                                    onComplete={isFirstMax ? () => {
-                                        setMaxIsStreaming(false);
-                                        setShowInput(true);
-                                        Animated.timing(keyboardOpacity, {
-                                            toValue: 1,
-                                            duration: 1000,
-                                            useNativeDriver: true
-                                        }).start(() => {
-                                            setTimeout(() => {
-                                                inputRef?.current?.focus();
-                                            }, 100);
-                                        });
-                                    } : isAdviceQuestion ? () => {
-                                        setMaxIsStreaming(false);
-                                        setShowAdviceOptions(true);
-                                    } : isFamilyQuestion ? () => {
-                                        setMaxIsStreaming(false);
-                                        setShowFamilyOptions(true);
-                                        Animated.timing(familyOptionsOpacity, {
-                                            toValue: 1,
-                                            duration: 500,
-                                            useNativeDriver: true
-                                        }).start();
-                                    } : () => setMaxIsStreaming(false)}
-                                />
-                            );
+                            return <MaxText text={item.text} onComplete={getOnCompleteHandler(item, index)} />;
                         }
                     }}
-                    ListFooterComponent={loading ? <LoadingBubble /> : null}
                 />
 
+                {/* KEYBOARD INPUT */}
                 {showInput && (
                     <Animated.View style={[styles.textInputContainer, { opacity: keyboardOpacity }]}>
                         <TextInput
                             ref={inputRef}
                             style={styles.textInput}
-                            placeholder="Enter your name"
+                            placeholder="Enter your first name"
                             placeholderTextColor="#B0B0B0"
                             value={userName}
                             onChangeText={setUserName}
@@ -362,16 +548,18 @@ const Chat = () => {
                     </Animated.View>
                 )}
 
+                {/* SOUNDS GOOD BUTTON */}
                 {showButton && !maxIsStreaming && (
                     <Animated.View style={[styles.buttonContainer, { opacity: buttonOpacity }]}>
                         <Button 
                             onPress={handleSoundsGood}
-                            style={{ marginHorizontal: 10, marginBottom: 10 }} 
+                            style={{ marginHorizontal: 10 }} 
                             label="Sounds good"
                         />
                     </Animated.View>
                 )}
 
+                {/* CONTINUE BUTTON */}
                 {showAdviceOptions && selectedOption.length > 0 && showContinueButton && (
                     <View style={styles.buttonContainer}>
                         <Button 
@@ -382,6 +570,7 @@ const Chat = () => {
                     </View>
                 )}
 
+                {/* INCLUDE FAMILY CONVERSATION BUTTON */}
                 {showFamilyOptions && (
                     <Animated.View style={{ opacity: familyOptionsOpacity }}>
                         <View style={styles.buttonContainer}>
@@ -392,19 +581,59 @@ const Chat = () => {
                             />
 
                             <TouchableOpacity onPress={() => handleFamilyOptionPress(false)}>
-                                <EPMText style={{ fontSize: 16, textAlign: "center", opacity: 0.8 }}>
+                                <EPMText style={styles.skipText}>
                                     Skip
                                 </EPMText>                     
                             </TouchableOpacity>                     
                         </View>
                     </Animated.View>
                 )}
+
+                {/* UNLOCK WITH FACE ID BUTTON */}
+                {showUnlockButton && (
+                    <View style={styles.buttonContainer}>
+                        <Button 
+                            onPress={handleUnlockWithFaceID}
+                            style={{ marginHorizontal: 10 }} 
+                            label="Unlock with Face ID"
+                        />
+                    </View>
+                )}
+
+                {/* CONTINUE BUTTON AFTER VIEWING PRIVATE MEMORY BOX */}
+                {showContinueAfterPrivateMemoryBox && (
+                    <View style={styles.buttonContainer}>
+                        <Button 
+                            onPress={handleContinueAfterPrivateMemoryBox}
+                            style={{ marginHorizontal: 10 }} 
+                            label="Continue"
+                        />
+                    </View>
+                )}
+
+                {/* RATE 5 STARS BUTTON */}
+                {showRate5StarsButton && (
+                    <View style={styles.buttonContainer}>
+                        <Button 
+                            onPress={handleRate5Stars}
+                            style={{ marginHorizontal: 10, display: showInnerRate5StarsButton ? "flex" : "none" }} 
+                            label="Rate 5 stars"
+                            icon="star"
+                        />
+
+                        <TouchableOpacity onPress={handleIHaveRated}>
+                            <EPMText style={[styles.skipText, { display: showInnerRate5StarsButton ? "none" : "flex" }]}>
+                                I have rated
+                            </EPMText>                     
+                        </TouchableOpacity>
+                    </View>
+                )}
             </KeyboardAvoidingView>
         </SafeAreaView>
     )
 };
 
-export default Chat;
+export default GetSetUpChat;
 
 const styles = StyleSheet.create({
     container: {
@@ -414,7 +643,7 @@ const styles = StyleSheet.create({
 
     flatList: {
         paddingHorizontal: 5,
-        backgroundColor: "red"
+        paddingTop: 10
     },
 
     textInputContainer: {
@@ -448,5 +677,11 @@ const styles = StyleSheet.create({
         position: "absolute",
         bottom: 0,
         width: "100%"
+    },
+
+    skipText: {
+        fontSize: 16,
+        textAlign: "center",
+        opacity: 0.8
     }
 });

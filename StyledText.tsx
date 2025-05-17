@@ -1,8 +1,8 @@
 import { Text, TextProps } from 'react-native';
 import React from 'react';
 
-export function EPRText(props: TextProps & { color?: string }) {
-    return <Text {...props} allowFontScaling={false} maxFontSizeMultiplier={1} style={[props.style, { fontFamily: "EPR", lineHeight: 21, color: props.color || "white" }]} />;
+export function EPRText(props: TextProps & { color?: string, lineHeight?: number }) {
+    return <Text {...props} allowFontScaling={false} maxFontSizeMultiplier={1} style={[props.style, { fontFamily: "EPR", lineHeight: props.lineHeight || 21, color: props.color || "white" }]} />;
 };
 
 export function EPMText(props: TextProps & { color?: string }) {

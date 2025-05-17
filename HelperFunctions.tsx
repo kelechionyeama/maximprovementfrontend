@@ -1,6 +1,8 @@
 import * as Haptics from "expo-haptics";
 import { Linking } from "react-native";
 import { appInfo } from "./config";
+import * as StoreReview from "expo-store-review";
+import { Platform } from "react-native";
 
 // DELAY FOR A VARIABLE TIME
 export function wait(timeout: number) {
@@ -42,4 +44,27 @@ export const joinWithAnd = (arr: string[]) => {
     if (arr.length === 1) return arr[0];
     if (arr.length === 2) return arr[0] + " and " + arr[1];
     return arr.slice(0, -1).join(", ") + " and " + arr[arr.length - 1];
+};
+
+// LEAVE RATING ON APP STORE OR PLAY STORE
+export const leaveRating = async () => {
+    try {
+        if (await StoreReview.hasAction()) {
+            await StoreReview.requestReview();
+        } else {
+            // FALLBACK TO DIRECT STORE LINKS IF STORE REVIEW IS NOT AVAILABLE
+            const appStoreUrl = "https://apps.apple.com/us/app/clean-eats/id6741033862";
+            const playStoreUrl = "market://details?id=com.kelechionyeama.cleaneats.app";
+            
+            // CHECK PLATFORM AND OPEN APPROPRIATE STORE
+            if (Platform.OS === 'ios') {
+                Linking.openURL(appStoreUrl);
+            } else if (Platform.OS === 'android') {
+                Linking.openURL(playStoreUrl).catch(() => {
+                    // IF DIRECT MARKET LINK FAILS, TRY WEB URL
+                    Linking.openURL("https://play.google.com/store/apps/details?id=com.kelechionyeama.cleaneats.app");
+                });
+            }
+        }
+    } catch (e) {}
 };

@@ -6,6 +6,11 @@ export interface FeatureItem {
 
 export const allFeatures: FeatureItem[] = [
     {
+        title: "Get set up",
+        icon: require("@/assets/icons/wavingHand.png"),
+        params: "getSetUp"
+    },
+    {
         title: "Ask me anything",
         icon: require("@/assets/icons/8Ball.png"),
         params: "askMeAnything"

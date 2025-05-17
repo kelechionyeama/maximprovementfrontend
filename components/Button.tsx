@@ -1,4 +1,4 @@
-import { StyleSheet, TouchableOpacity, TouchableOpacityProps, ActivityIndicator, View, Text } from 'react-native';
+import { StyleSheet, TouchableOpacity, TouchableOpacityProps, ActivityIndicator, View } from 'react-native';
 import React from 'react';
 import * as Haptics from "expo-haptics";
 import { EPBText } from '../StyledText';
@@ -38,11 +38,11 @@ export const Button = ({ label, disabled, style, onPress, textColor = "white", l
                 <ActivityIndicator size="small" color={finalTextColor} />
             ) : (
                 <View style={styles.content}>
-                    {icon && <MaterialCommunityIcons name={icon} size={20} color={finalTextColor} style={styles.icon} />}
-
                     <EPBText color="black" style={{ fontSize: 16 }}>
                         {label}
                     </EPBText>
+
+                    {icon && <MaterialCommunityIcons name={icon} size={24} color={"gold"} style={styles.icon} />}
                 </View>
             )}
         </TouchableOpacity>
@@ -80,6 +80,6 @@ const styles = StyleSheet.create({
     },
 
     icon: {
-        marginRight: 4
+        marginTop: -4
     }
 }); 

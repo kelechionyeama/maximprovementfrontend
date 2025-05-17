@@ -1,6 +1,5 @@
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 
 export default function RootLayout() {
 
@@ -22,7 +21,8 @@ function RootLayoutNav() {
 			<Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
 			<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 			<Stack.Screen name="chat" options={{  }} />
-			<Stack.Screen name="getSetUpChat" options={{  }} />
+			<Stack.Screen name="getSetUpChat" options={{ gestureEnabled: false }} />
+			<Stack.Screen name="chatHistory" options={{ animation: "ios_from_left", gestureEnabled: false }} />
 		</Stack>
 	);
 };

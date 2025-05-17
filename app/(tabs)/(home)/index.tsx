@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
-import { useNavigation } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import React from "react";
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Ionicons, Octicons } from '@expo/vector-icons';
 import { Animated, FlatList, NativeScrollEvent, NativeSyntheticEvent, StyleSheet, View, TouchableOpacity } from "react-native";
 import Feature from "../../../components/Feature";
 import { allFeatures, FeatureItem } from "../../../ExportedArrays";
@@ -11,6 +11,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const Home = () => {
 
+    const [isUser, setIsUser] = React.useState(false);
+
     const navigation = useNavigation();
     const bottomSheetRef = React.useRef<BottomSheetModal>(null);
 
@@ -18,6 +20,11 @@ const Home = () => {
     React.useLayoutEffect(() => {
         navigation.setOptions({
             headerTitle: "",
+            headerLeft: () => (
+                <TouchableOpacity disabled={isUser} onPress={() => router.push("/chatHistory")}>
+                    <Octicons name="history" size={24} color="white" />
+                </TouchableOpacity>
+            ),
             headerRight: () => (
                 <TouchableOpacity onPress={() => bottomSheetRef.current?.expand()}>
                     <Ionicons name="menu-sharp" size={30} color="white" />
@@ -57,10 +64,26 @@ const Home = () => {
 
             <View style={styles.listContainer}>
                 <FlatList
-                    data={allFeatures}
+                    data={isUser ?allFeatures.slice(1) : allFeatures}
                     showsVerticalScrollIndicator={false}
+                    scrollEnabled={isUser}
                     renderItem={({ item, index }: { item: FeatureItem; index: number }) => (
-                        <Feature key={index} title={item.title} icon={item.icon} params={item.params} />
+                        isUser ? (
+                            <Feature 
+                                key={index} 
+                                title={item.title}
+                                icon={item.icon} 
+                                params={item.params} 
+                            />
+                        ) : (
+                            <Feature 
+                                key={index} 
+                                title={item.title} 
+                                active={item.title === "Get set up" ? true : false} 
+                                icon={item.icon} 
+                                params={item.params} 
+                            />
+                        )
                     )}
                     keyExtractor={(item, index) => index.toString()}
                     ListHeaderComponent={() => 

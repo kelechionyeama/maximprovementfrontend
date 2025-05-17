@@ -52,7 +52,7 @@ const MaxText = ({ text, onComplete }: { text: string, onComplete?: () => void }
 
     return (
         <>
-            <EPBText style={styles.titleText}>
+            <EPBText color="#B0B0B0" style={styles.titleText}>
                 MAX:
             </EPBText>
 

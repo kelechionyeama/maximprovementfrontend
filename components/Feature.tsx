@@ -30,18 +30,22 @@ const ICON_SIZE_MAP = {
 
 const Feature = ({ title, icon, params, active = true}: OptionProps) => {
     const iconSize = ICON_SIZE_MAP[params as keyof typeof ICON_SIZE_MAP] || "small";
+
+    const handleNavigate = () => {
+        if (title === "Get set up") {
+            router.push("/getSetUpChat");
+        } else {
+            const feature = { title, icon, params };
+            router.push({ pathname: "/chat", params: { feature: JSON.stringify(feature) } });
+        }
+    };
     
     return (
 		<Pressable
-			disabled={!active}
+			disabled={active ? false : true}
 			style={styles.onboardingItem} 
-			onPress={() => router.push("/getSetUpChat")}
-			//   onPress={() => router.push({
-			//     pathname: "getSetUpChat",
-			//     params: { question: params }
-			//   })}
-		>
-            <View style={styles.onboardingItemLeft}>
+			onPress={handleNavigate}>
+            <View style={[styles.onboardingItemLeft, { opacity: active ? 1 : 0.5 }]}>
                <Image 
 			   		source={icon} 
 					style={ICON_SIZES[iconSize]}
@@ -49,9 +53,9 @@ const Feature = ({ title, icon, params, active = true}: OptionProps) => {
 				/>
             </View>
 
-            <View style={styles.onboardingItemRight}>
+            <View style={[styles.onboardingItemRight, { opacity: active ? 1 : 0.5 }]}>
 				<LinearGradient
-					colors={active ? ['#000000','#212121' ] : ['#000000','#0d0d0d' ]}
+					colors={active ? ['#000000','#212121' ] : ['#000000', '#0d0d0d' ]}
 					locations={[0.1, 0.8]}
 					style={styles.gradientBorder}
 				/>
