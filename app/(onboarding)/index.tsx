@@ -20,7 +20,7 @@ const Index = () => {
 
 			<Button 
 				label="Get Started" 
-				onPress={() => router.push("/(tabs)/(memory)")}
+				onPress={() => router.push("/(tabs)/(home)")}
 			/>
 
 			<View>			

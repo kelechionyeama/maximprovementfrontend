@@ -11,7 +11,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const Home = () => {
 
-    const [isUser, setIsUser] = React.useState(false);
+    const [isUser, setIsUser] = React.useState(true);
 
     const navigation = useNavigation();
     const bottomSheetRef = React.useRef<BottomSheetModal>(null);

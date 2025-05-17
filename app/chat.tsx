@@ -1,11 +1,12 @@
-import { StyleSheet, SafeAreaView, Platform, KeyboardAvoidingView, FlatList, TextInput, View, TouchableOpacity } from 'react-native';
-import React from 'react';
-import { useNavigation } from 'expo-router';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { EPBText, EPMText } from '../StyledText';
 import { LoadingBubble } from '@/components/chat/loadingBubble';
+import SuggestedReplies from '@/components/chat/SuggestedReplies';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import React from 'react';
+import { FlatList, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import MaxText from '../components/chat/max';
 import YouText from '../components/chat/you';
+import { EPBText } from '../StyledText';
 
 interface ChatMessage {
     text: string;
@@ -18,26 +19,32 @@ const Chat = () => {
     const [message, setMessage] = React.useState("");
     const [loading, setLoading] = React.useState(false);
 
+    const getFeature = useLocalSearchParams<{ feature: string }>();
+    const feature = JSON.parse(getFeature.feature);
+
     const flatListRef = React.useRef<FlatList>(null);
     const inputRef = React.useRef<TextInput>(null);
 
     const navigation = useNavigation();
 
+    // HEADER NAVIGATION
     React.useLayoutEffect(() => {
         navigation.setOptions({
             headerTitle: () => (
-                <EPBText style={{ color: "white", fontSize: 18 }}>
-                    Get Set Up
+                <EPBText style={{ fontSize: 18 }}>
+                    {feature.title}
                 </EPBText>
             ),
             headerLeft: () => (
-                <Ionicons name="chevron-back-outline" size={24} color="white" />
+                <TouchableOpacity onPress={() => router.back()}>
+                    <Ionicons name="chevron-back-outline" size={24} color="white" />
+                </TouchableOpacity>
             ),
             headerStyle: {
                 backgroundColor: "black"
             },
             contentStyle: {
-				borderWidth: 0.5,
+				borderWidth: 0.3,
 				borderTopColor: "white"
 			}
         });
@@ -68,42 +75,49 @@ const Chat = () => {
                     }}
                 />
 
-                <View style={styles.textInputContainer}>
-                    <TextInput
-                        ref={inputRef}
-                        style={styles.textInput}
-                        placeholder="Enter your first name"
-                        placeholderTextColor="#B0B0B0"
-                        value={message}
-                        onChangeText={setMessage}
-                        multiline={false}
+                <View>
+                    <SuggestedReplies 
+                        replies={["I am sad todayI am tired today", "I am tired today", "I am sick today"]} 
+                        onQuestionPress={handleSend}
                     />
 
-                    <TouchableOpacity onPress={handleSend}>
-                        <Ionicons 
-                            name="send" 
-                            size={24} 
-                            color="#B0B0B0" 
-                            style={{ marginLeft: 8 }} 
+                    <View style={styles.textInputContainer}>
+                        <TextInput
+                            ref={inputRef}
+                            style={styles.textInput}
+                            placeholder="Ask me anything..."
+                            placeholderTextColor="#B0B0B0"
+                            value={message}
+                            onChangeText={setMessage}
+                            multiline={false}
                         />
-                    </TouchableOpacity>
+
+                        <TouchableOpacity onPress={handleSend}>
+                            <Ionicons 
+                                name="send" 
+                                size={24} 
+                                color="#B0B0B0" 
+                                style={{ marginLeft: 8 }} 
+                            />
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     )
-}
+};
 
 export default Chat;
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'black'
+        backgroundColor: "black"
     },
 
     flatList: {
         paddingHorizontal: 5,
-        paddingTop: 10
+        paddingTop: 10,
     },
 
     textInputContainer: {

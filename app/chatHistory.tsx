@@ -83,7 +83,7 @@ const chatHistoryData: Section[] = [
 ];
 
 const ChatHistory = () => {
-    
+
     const navigation = useNavigation();
 
     // HEADER NAVIGATION
@@ -137,11 +137,11 @@ const ChatHistory = () => {
                 showsVerticalScrollIndicator={false}
             />
 
-            <TouchableOpacity style={styles.buttonContainer}>
+            {/* <TouchableOpacity style={styles.buttonContainer}>
                 <EPRText color="#FF5252" style={styles.text}>
                     Clear Chat History
                 </EPRText>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
         </SafeAreaView>
     )
 };
