@@ -1,12 +1,7 @@
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Alert, Platform } from 'react-native';
 
-interface FaceIdAuthResult {
-    success: boolean;
-    error?: string;
-};
-
-export const handleEnableFaceId = async (): Promise<FaceIdAuthResult> => {
+export async function handleEnableFaceId() {
     try {
         // CHECK IF HARDWARE SUPPORTS BIOMETRIC
         const compatible = await LocalAuthentication.hasHardwareAsync();

@@ -1,9 +1,9 @@
 import LottieView from 'lottie-react-native';
 import React from 'react';
-import { Animated, StyleSheet } from 'react-native';
+import { Animated, StyleSheet, FlatList } from 'react-native';
 import { EPBText } from '../../StyledText';
 
-export const LoadingBubble = () => {
+export const LoadingBubble = ({ flatListRef }: { flatListRef?: React.RefObject<FlatList> }) => {
 
     const [showLottie, setShowLottie] = React.useState(false);
     const textOpacity = React.useRef(new Animated.Value(0)).current;
@@ -14,6 +14,7 @@ export const LoadingBubble = () => {
             duration: 500,
             useNativeDriver: true,
         }).start(() => {
+            flatListRef?.current?.scrollToEnd({ animated: true });
             setTimeout(() => setShowLottie(true), 500);
         });
     }, []);
@@ -21,20 +22,18 @@ export const LoadingBubble = () => {
     return (
         <>
             <Animated.View style={{ opacity: textOpacity }}>
-                <EPBText style={styles.titleText}>
+                <EPBText color="#B0B0B0" style={styles.titleText}>
                     MAX:
                 </EPBText>
             </Animated.View>
 
-            {showLottie && (
-                <LottieView
-                    loop
-                    autoPlay
-                    style={styles.dot}
-                    resizeMode="center"
-                    source={require("@/assets/loaders/typing.json")}
-                />
-            )}
+            <LottieView
+                loop
+                autoPlay
+                style={[styles.dot, { opacity: showLottie ? 1 : 0 }]}
+                resizeMode="center"
+                source={require("@/assets/loaders/typing.json")}
+            />
         </>
     );
 };
@@ -45,11 +44,11 @@ const styles = StyleSheet.create({
         height: 13,
         borderRadius: 100,
         overflow: "hidden",
-        marginTop: 2
+        marginTop: 2,
+        marginBottom: 10
     },
 
     titleText: {
-        color: "#B0B0B0",
         fontSize: 16
-    },
+    }
 }); 

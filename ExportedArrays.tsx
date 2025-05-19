@@ -18,7 +18,7 @@ export const allFeatures: FeatureItem[] = [
     {
         title: "Dating & relationships",
         icon: require("@/assets/icons/heart.png"),
-        params: "datingRelationships"
+        params: "datingAndRelationships"
     },
     {
         title: "Personality test",

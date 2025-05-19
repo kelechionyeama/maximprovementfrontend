@@ -5,7 +5,7 @@ import { EPBText, EPMText } from '../../StyledText';
 const YouText = ({ text }: { text: string }) => {
     return (
         <>
-            <EPBText style={styles.titleText}>
+            <EPBText color="#B0B0B0" style={styles.titleText}>
                 You:
             </EPBText>
 
@@ -20,12 +20,10 @@ export default YouText;
 
 const styles = StyleSheet.create({
     titleText: {
-        color: "#B0B0B0",
         fontSize: 16
     },
 
     messageText: {
-        color: "white",
         fontSize: 16,
         marginBottom: 20
     }

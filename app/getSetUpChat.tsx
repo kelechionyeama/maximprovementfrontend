@@ -1,7 +1,8 @@
 import { Button } from '@/components/Button';
 import OptionsSelector from '@/components/OptionsSelector';
 import PrivateMemoryBox from '@/components/PrivateMemoryBoxes';
-import { joinWithAnd, lowercaseFirst, leaveRating, wait } from '@/HelperFunctions';
+import { joinWithAnd, leaveRating, lowercaseFirst, wait } from '@/HelperFunctions';
+import { handleEnableFaceId } from '@/utils/faceIdAuth';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from 'expo-router';
 import React from 'react';
@@ -14,7 +15,6 @@ import MaxText from '../components/chat/max';
 import YouText from '../components/chat/you';
 import { needHelpWith } from '../ExportedArrays';
 import { EPBText, EPMText } from '../StyledText';
-import { handleEnableFaceId } from '@/app/utils/faceIdAuth';
 
 interface ChatMessage {
     text: string;
@@ -33,6 +33,7 @@ const GetSetUpChat = () => {
     const [maxIsStreaming, setMaxIsStreaming] = React.useState(false);
     const [showAdviceOptions, setShowAdviceOptions] = React.useState(false);
     const [showContinueButton, setShowContinueButton] = React.useState(true);
+    const [showHowLongHaveYouBeenStruggling, setShowHowLongHaveYouBeenStruggling] = React.useState(false);
     const [showFamilyOptions, setShowFamilyOptions] = React.useState(false);
     const [showPrivateMemoryBox, setShowPrivateMemoryBox] = React.useState(false);
 
@@ -47,6 +48,7 @@ const GetSetUpChat = () => {
     const keyboardOpacity = React.useRef(new Animated.Value(0)).current;
     const buttonOpacity = React.useRef(new Animated.Value(0)).current;
     const optionOpacities = React.useRef(needHelpWith.map(() => new Animated.Value(0))).current;
+    const howLongHaveYouBeenStrugglingOpacity = React.useRef(new Animated.Value(0)).current;
     const familyOptionsOpacity = React.useRef(new Animated.Value(0)).current;
     const privateMemoryBoxOpacity = React.useRef(new Animated.Value(0)).current;
 
@@ -59,10 +61,11 @@ const GetSetUpChat = () => {
                         "\n\nI was created by two guys who struggled with confidence in high school." + 
                         "\n\nNow, I'm here to be the big brother they wish they had.";
     const text3 = "Now tell me, what do you need help with?";
-    const text4 = "Got it—I'd focus on " + (selectedOption.length > 1 ? "those" : "that") + ". Are you open to talking about family matters too, or prefer not to?";
-    const text5 = "As we keep talking, I'll store stuff I know about you in my private memory.";
-    const text6 = "One last thing, " + userName.trim() + "—mind giving me 5 stars so others can find me?";
-    const text7 = "See you on the other side, " + userName.trim() + "\n\nArchiving this chat...";
+    const text4 = (selectedOption.length > 1 ? "Are these things" : "Is this something") + " you've been struggling with for a long time, or did " + (selectedOption.length > 1 ? "they" : "it") + " come up recently?";
+    const text5 = "Got it—I'd focus on " + (selectedOption.length > 1 ? "those" : "that") + ". Are you also open to talking about family matters, or prefer not to?";
+    const text6 = "As we keep talking, I'll remember important things about you in my private memory and bring them up in future chats.";
+    const text7 = "One last thing, " + userName.trim() + "—mind giving me 5 stars so others can find me?";
+    const text8 = "See you on the other side, " + userName.trim() + "\n\nArchiving this chat...";
 
 
     // HEADER NAVIGATION
@@ -218,6 +221,38 @@ const GetSetUpChat = () => {
     };
 
 
+    // HANDLE HOW LONG HAVE YOU BEEN STRUGGLING? BUTTON PRESS
+    const howLongHaveYouBeenStruggling = async (text: string) => {
+        setShowHowLongHaveYouBeenStruggling(false);
+
+        setChatConversation(prev => [...prev,
+            { 
+                text: text,
+                isUser: true
+            }
+        ]);
+
+        await wait(200);
+        flatListRef.current?.scrollToEnd({ animated: true });
+
+        setLoading(true);
+        await wait(1500);
+
+        setChatConversation(prev => [...prev,
+            { 
+                text: text5,
+                isUser: false
+            }
+        ]);
+
+        await wait(200);
+        flatListRef.current?.scrollToEnd({ animated: true });
+
+        setMaxIsStreaming(true);
+        setLoading(false);
+    };
+
+
     // HANDLE OPEN TO FAMILY TALKS OPTION PRESS
     const handleFamilyOptionPress = async (open: boolean) => {
         flatListRef.current?.scrollToEnd({ animated: true });
@@ -241,7 +276,7 @@ const GetSetUpChat = () => {
         setChatConversation(prev => [
             ...prev,
             {
-                text: text5,
+                text: text6,
                 isUser: false
             },
             {
@@ -251,7 +286,7 @@ const GetSetUpChat = () => {
             }
         ]);
 
-        await wait(200);
+        await wait(300);
         flatListRef.current?.scrollToEnd({ animated: true });
 
         setMaxIsStreaming(true);
@@ -282,7 +317,7 @@ const GetSetUpChat = () => {
 
         setChatConversation(prev => [...prev,
             { 
-                text: text6,
+                text: text7,
                 isUser: false
             }
         ]);
@@ -303,6 +338,7 @@ const GetSetUpChat = () => {
     };
 
 
+    // HANDLE I HAVE RATED BUTTON PRESS
     const handleIHaveRated = async () => {
         setShowRate5StarsButton(false);
 
@@ -312,7 +348,7 @@ const GetSetUpChat = () => {
 
         setChatConversation(prev => [...prev,
             { 
-                text: text7,
+                text: text8,
                 isUser: false
             }
         ]);
@@ -322,6 +358,9 @@ const GetSetUpChat = () => {
 
         setMaxIsStreaming(true);
         setLoading(false);
+
+        await wait(200);
+        flatListRef.current?.scrollToEnd({ animated: true });
     };
 
 
@@ -422,7 +461,7 @@ const GetSetUpChat = () => {
     const getOnCompleteHandler = (item: ChatMessage, index: number) => {
         const isFirstMax = index === 0 && !item.isUser && !item.options;
         const isAdviceQuestion = item.text.includes("Now tell me, what do you need help with?");
-        const isFamilyQuestion = item.text.includes("Are you open to talking about family");
+        const isFamilyQuestion = item.text.includes("Are you also open to talking about family");
 
         if (isFirstMax) return handleFirstMaxComplete;
         if (isAdviceQuestion) return handleAdviceQuestionComplete;
@@ -437,13 +476,27 @@ const GetSetUpChat = () => {
             if (!maxIsStreaming && chatConversation.length > 0) {
                 const lastMessage = chatConversation[chatConversation.length - 1];
 
+                if (lastMessage.text.includes("you've been struggling with for a long time")) {
+                    await wait(500);
+
+                    setShowHowLongHaveYouBeenStruggling(true);
+
+                    Animated.timing(howLongHaveYouBeenStrugglingOpacity, {
+                        toValue: 1,
+                        duration: 1000,
+                        useNativeDriver: true
+                    }).start();
+
+                    await wait(100);
+                    flatListRef.current?.scrollToEnd({ animated: true });
+                };
+
                 // SHOW PRIVATE MEMORY BOX
                 if (lastMessage.showPrivateMemoryBox) {
                     await wait(100);
                     flatListRef.current?.scrollToEnd({ animated: true });
 
                     await wait(1000);
-
                     setShowPrivateMemoryBox(true);
 
                     Animated.timing(privateMemoryBoxOpacity, {
@@ -477,15 +530,15 @@ const GetSetUpChat = () => {
             <KeyboardAvoidingView 
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={{ flex: 1 }}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+                keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}>
 
                 <FlatList
                     ref={flatListRef}
                     data={chatConversation}
                     contentContainerStyle={styles.flatList}
                     showsVerticalScrollIndicator={false}
-                    style={{ marginBottom: 140 }}
-                    ListFooterComponent={loading ? <LoadingBubble /> : null}
+                    style={{ marginBottom: 200, paddingHorizontal: 5 }}
+                    ListFooterComponent={loading ? <LoadingBubble flatListRef={flatListRef} /> : null}
                     renderItem={({ item, index }) => {
                         if (item.showPrivateMemoryBox) {
                             if (!showPrivateMemoryBox) return null;
@@ -537,7 +590,7 @@ const GetSetUpChat = () => {
                             multiline={false}
                         />
 
-                        <TouchableOpacity onPress={handleSend}>
+                        <TouchableOpacity disabled={userName.trim().length < 3} style={{ padding: 5 }} onPress={handleSend}>
                             <Ionicons 
                                 name="send" 
                                 size={24} 
@@ -552,8 +605,7 @@ const GetSetUpChat = () => {
                 {showButton && !maxIsStreaming && (
                     <Animated.View style={[styles.buttonContainer, { opacity: buttonOpacity }]}>
                         <Button 
-                            onPress={handleSoundsGood}
-                            style={{ marginHorizontal: 10 }} 
+                            onPress={handleSoundsGood} 
                             label="Sounds good"
                         />
                     </Animated.View>
@@ -563,11 +615,32 @@ const GetSetUpChat = () => {
                 {showAdviceOptions && selectedOption.length > 0 && showContinueButton && (
                     <View style={styles.buttonContainer}>
                         <Button 
-                            onPress={handleContinue}
-                            style={{ marginHorizontal: 10 }} 
+                            onPress={handleContinue} 
                             label="Continue"
                         />
                     </View>
+                )}
+
+                {/* HOW LONG HAVE YOU BEEN STRUGGLING? */}
+                {showHowLongHaveYouBeenStruggling && (
+                    <Animated.View style={[styles.buttonContainer, { opacity: howLongHaveYouBeenStrugglingOpacity, bottom: -20 }]}>
+                        <Button 
+                            onPress={() => howLongHaveYouBeenStruggling("Just started")}
+                            label="Just started"
+                        />                 
+
+                        <View style={{ marginVertical: -5 }}>
+                            <Button 
+                                onPress={() => howLongHaveYouBeenStruggling("On and off")}
+                                label="On and off"
+                            />                   
+                        </View>
+
+                        <Button 
+                            onPress={() => howLongHaveYouBeenStruggling("All my life")}
+                            label="All my life"
+                        />                                  
+                    </Animated.View>
                 )}
 
                 {/* INCLUDE FAMILY CONVERSATION BUTTON */}
@@ -576,7 +649,6 @@ const GetSetUpChat = () => {
                         <View style={styles.buttonContainer}>
                             <Button 
                                 onPress={() => handleFamilyOptionPress(true)}
-                                style={{ marginHorizontal: 10, marginVertical: 10 }} 
                                 label="I'm open to it"
                             />
 
@@ -594,7 +666,6 @@ const GetSetUpChat = () => {
                     <View style={styles.buttonContainer}>
                         <Button 
                             onPress={handleUnlockWithFaceID}
-                            style={{ marginHorizontal: 10 }} 
                             label="Unlock with Face ID"
                         />
                     </View>
@@ -605,7 +676,6 @@ const GetSetUpChat = () => {
                     <View style={styles.buttonContainer}>
                         <Button 
                             onPress={handleContinueAfterPrivateMemoryBox}
-                            style={{ marginHorizontal: 10 }} 
                             label="Continue"
                         />
                     </View>
@@ -616,7 +686,7 @@ const GetSetUpChat = () => {
                     <View style={styles.buttonContainer}>
                         <Button 
                             onPress={handleRate5Stars}
-                            style={{ marginHorizontal: 10, display: showInnerRate5StarsButton ? "flex" : "none" }} 
+                            style={{ display: showInnerRate5StarsButton ? "flex" : "none" }} 
                             label="Rate 5 stars"
                             icon="star"
                         />

@@ -1,15 +1,18 @@
-import { Image } from "expo-image";
-import { router, useNavigation } from 'expo-router';
-import React from "react";
 import { Ionicons, Octicons } from '@expo/vector-icons';
-import { Animated, FlatList, NativeScrollEvent, NativeSyntheticEvent, StyleSheet, View, TouchableOpacity } from "react-native";
-import Feature from "../../../components/Feature";
-import { allFeatures, FeatureItem } from "../../../ExportedArrays";
-import SettingsBottomSheet from "../../../components/settingsBottomSheet";
 import BottomSheetModal from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetModal';
+import { Image } from "expo-image";
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import React from "react";
+import { Animated, FlatList, NativeScrollEvent, NativeSyntheticEvent, StyleSheet, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Feature from "../../../components/Feature";
+import SettingsBottomSheet from "../../../components/settingsBottomSheet";
+import { allFeatures, FeatureItem } from "../../../ExportedArrays";
 
 const Home = () => {
+
+    const defaults = useLocalSearchParams();
+    const defaultsReplies = JSON.parse(defaults.feature as string);
 
     const [isUser, setIsUser] = React.useState(true);
 
@@ -21,12 +24,13 @@ const Home = () => {
         navigation.setOptions({
             headerTitle: "",
             headerLeft: () => (
-                <TouchableOpacity disabled={isUser} onPress={() => router.push("/chatHistory")}>
+                <TouchableOpacity style={{ opacity: isUser ? 1 : 0.5 }} disabled={isUser ? false : true} 
+                    onPress={() => router.push("/chatHistory")}>
                     <Octicons name="history" size={24} color="white" />
                 </TouchableOpacity>
             ),
             headerRight: () => (
-                <TouchableOpacity onPress={() => bottomSheetRef.current?.expand()}>
+                <TouchableOpacity style={{ opacity: isUser ? 1 : 0.5 }} onPress={() => bottomSheetRef.current?.expand()}>
                     <Ionicons name="menu-sharp" size={30} color="white" />
                 </TouchableOpacity>
             ),
@@ -73,7 +77,8 @@ const Home = () => {
                                 key={index} 
                                 title={item.title}
                                 icon={item.icon} 
-                                params={item.params} 
+                                params={item.params}
+                                defaultsReplies={defaultsReplies[item.params]}
                             />
                         ) : (
                             <Feature 
@@ -81,6 +86,7 @@ const Home = () => {
                                 title={item.title} 
                                 active={item.title === "Get set up" ? true : false} 
                                 icon={item.icon} 
+                                defaultsReplies={defaultsReplies[item.params]}
                                 params={item.params} 
                             />
                         )
@@ -100,7 +106,7 @@ const Home = () => {
             <SettingsBottomSheet bottomSheetRef={bottomSheetRef} />
         </GestureHandlerRootView>
     )
-}
+};
 
 export default Home;
 

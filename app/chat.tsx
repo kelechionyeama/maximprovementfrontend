@@ -1,12 +1,14 @@
 import { LoadingBubble } from '@/components/chat/loadingBubble';
 import SuggestedReplies from '@/components/chat/SuggestedReplies';
+import { wait } from '@/HelperFunctions';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Animated, FlatList, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import MaxText from '../components/chat/max';
 import YouText from '../components/chat/you';
 import { EPBText } from '../StyledText';
+import { chatApi } from '@/api/ChatApi';
 
 interface ChatMessage {
     text: string;
@@ -16,16 +18,22 @@ interface ChatMessage {
 const Chat = () => {
 
     const [chatConversation, setChatConversation] = React.useState<ChatMessage[]>([]);
-    const [message, setMessage] = React.useState("");
-    const [loading, setLoading] = React.useState(false);
+    const [value, setValue] = React.useState("");
+    const [messageId, setMessageId] = React.useState("");
+    const [loading, setLoading] = React.useState(true);
+    const [maxIsStreaming, setMaxIsStreaming] = React.useState(false);
 
+    const keyboardOpacity = React.useRef(new Animated.Value(0)).current;
     const getFeature = useLocalSearchParams<{ feature: string }>();
     const feature = JSON.parse(getFeature.feature);
+
+    const openingText = feature?.defaultsReplies?.openingText;
 
     const flatListRef = React.useRef<FlatList>(null);
     const inputRef = React.useRef<TextInput>(null);
 
     const navigation = useNavigation();
+
 
     // HEADER NAVIGATION
     React.useLayoutEffect(() => {
@@ -51,10 +59,79 @@ const Chat = () => {
     }, []);
 
 
-    const handleSend = () => {
-        setChatConversation([...chatConversation, { text: message, isUser: true }]);
-        setMessage("");
+    // SHOW OPENING MESSAGE
+    React.useEffect(() => {
+        (async () => {
+            setMaxIsStreaming(true);
+            setChatConversation([{ text: openingText, isUser: false }]);
+            setLoading(false);
+        })();
+    }, []);
+
+    
+    // SCROLL TO END AFTER NEW MESSAGE
+    const scrollToEnd = () => {
+        flatListRef.current?.scrollToEnd({ animated: true });
     };
+
+
+    // HANDLE SENDING MESSAGE
+    const handleSend = async (text?: string) => {
+        const message = text || value;
+        if (!message.trim()) return;
+
+        // setMaxIsStreaming(false);
+        setValue("");
+        setChatConversation([...chatConversation, { text: message, isUser: true }]);
+
+        // return;
+
+        await wait(200);
+        Keyboard.dismiss();
+        scrollToEnd();
+
+        setLoading(true);
+
+        // SEND MESSAGE TO SERVER
+        const response = await chatApi({
+            message,
+            messageId: messageId,
+            feature: feature?.params
+        });
+
+        const responseData = await response?.json();
+
+        // console.log("Response Data", responseData.data);
+        // return;
+
+        setLoading(false);
+        setChatConversation((prev) => [...prev, { text: responseData.data.message, isUser: false }]);
+        scrollToEnd();
+        setMessageId(responseData.data.messageId);
+    };
+
+
+    // HANDLE MAX TEXT COMPLETION
+    const getOnCompleteHandler = (item: ChatMessage, index: number) => {
+        const streaming = index === 0 && !item.isUser;
+
+        const lastMessage = chatConversation[chatConversation.length - 1];
+
+        // ONLY SHOW THE KEYBOARD AFTER THE OPENING TEXT
+        if (lastMessage.text.includes(openingText)) {
+            return async () => {
+                Animated.timing(keyboardOpacity, {
+                    toValue: 1,
+                    duration: 1000,
+                    useNativeDriver: true
+                }).start();
+
+                await wait(300);
+                inputRef.current?.focus();
+            };
+        };
+    };
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -68,17 +145,20 @@ const Chat = () => {
                     data={chatConversation}
                     contentContainerStyle={styles.flatList}
                     showsVerticalScrollIndicator={false}
-                    style={{ marginBottom: 140 }}
+                    style={{ marginBottom: 50, paddingBottom: 10 }}
                     ListFooterComponent={loading ? <LoadingBubble /> : null}
+                    onContentSizeChange={scrollToEnd}
                     renderItem={({ item, index }) => {
-                        return item.isUser ? <YouText text={item.text} /> : <MaxText text={item.text} />;
+                        return item.isUser ? <YouText text={item.text} /> :
+                            <MaxText text={item.text} onComplete={getOnCompleteHandler(item, index)} />;
                     }}
                 />
 
-                <View>
+                <Animated.View style={{ opacity: keyboardOpacity }}>
                     <SuggestedReplies 
-                        replies={["I am sad todayI am tired today", "I am tired today", "I am sick today"]} 
-                        onQuestionPress={handleSend}
+                        replies={feature?.defaultsReplies?.quickReplies || []} 
+                        onQuestionPress={(text) => handleSend(text)}
+                        display={chatConversation.length > 1 ? false : true}
                     />
 
                     <View style={styles.textInputContainer}>
@@ -87,12 +167,12 @@ const Chat = () => {
                             style={styles.textInput}
                             placeholder="Ask me anything..."
                             placeholderTextColor="#B0B0B0"
-                            value={message}
-                            onChangeText={setMessage}
-                            multiline={false}
+                            value={value}
+                            onChangeText={setValue}
+                            multiline={true}
                         />
 
-                        <TouchableOpacity onPress={handleSend}>
+                        <TouchableOpacity onPress={() => handleSend()}>
                             <Ionicons 
                                 name="send" 
                                 size={24} 
@@ -101,7 +181,7 @@ const Chat = () => {
                             />
                         </TouchableOpacity>
                     </View>
-                </View>
+                </Animated.View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     )
@@ -137,7 +217,8 @@ const styles = StyleSheet.create({
         fontSize: 16, 
         paddingVertical: 8,
         fontFamily: "EPM",
-        lineHeight: 20
-    },
-
+        lineHeight: 20,
+        maxHeight: 100,
+        paddingLeft: 5
+    }
 });

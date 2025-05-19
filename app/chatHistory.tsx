@@ -84,6 +84,8 @@ const chatHistoryData: Section[] = [
 
 const ChatHistory = () => {
 
+	const [chatHistory, setChatHistory] = React.useState<Section[]>(chatHistoryData);
+
     const navigation = useNavigation();
 
     // HEADER NAVIGATION
@@ -129,13 +131,22 @@ const ChatHistory = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <FlatList
-                data={chatHistoryData}
-                renderItem={renderSection}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.contentContainer}
-                showsVerticalScrollIndicator={false}
-            />
+			{chatHistory.length > 0 ? (
+				<FlatList
+					data={chatHistory}
+					renderItem={renderSection}
+					keyExtractor={item => item.id}
+					contentContainerStyle={styles.contentContainer}
+					showsVerticalScrollIndicator={false}
+				/>
+				) : (
+					<View style={styles.noPrivateMemoriesContainer}>
+						<EPRText style={styles.noPrivateMemoriesText}>
+							No chat history yet.
+						</EPRText>
+					</View>
+				)
+			}
 
             {/* <TouchableOpacity style={styles.buttonContainer}>
                 <EPRText color="#FF5252" style={styles.text}>
@@ -155,26 +166,31 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingBottom: 80
     },
+
     contentContainer: {
         paddingHorizontal: 15,
         paddingTop: 20
     },
+
     text: {
         fontSize: 16,
         textAlign: 'center',
         width: "100%",
         marginTop: 30
     },
+
     buttonContainer: {
         width: "90%",
         alignSelf: "center",
         justifyContent: "center"
     },
+	 
     dateHeader: {
         fontSize: 16,
         marginBottom: 10,
         marginTop: 20
     },
+
     chatItem: {
         padding: 14,
         borderWidth: 0.5,
@@ -183,14 +199,27 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginBottom: 10
     },
+
     chatContent: {
         justifyContent: "space-between"
     },
+
     chatTitle: {
         fontSize: 16
     },
+
     tagText: {
         fontSize: 14,
         marginTop: 5
+    },
+
+	noPrivateMemoriesContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center"
+    },
+
+    noPrivateMemoriesText: {
+        fontSize: 20
     }
 });

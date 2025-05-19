@@ -1,21 +1,18 @@
 import React from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { StyleSheet, View, TouchableOpacity } from "react-native";
 import { EPMText } from "../../StyledText";
 
 interface SuggestedRepliesProps {
     replies: string[];
     onQuestionPress: (title: string) => void;
+    display: boolean;
 };
 
-const SuggestedReplies = ({ replies, onQuestionPress }: SuggestedRepliesProps) => {
+const SuggestedReplies = ({ replies, onQuestionPress, display }: SuggestedRepliesProps) => {
     return (
-        <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.container}
-        >
-            {replies.map((reply) => (
-                <Pressable 
+        <View style={[styles.container, { display: display ? "flex" : "none", zIndex: 1 }]}>
+            {replies?.map((reply) => (
+                <TouchableOpacity 
                     key={reply} 
                     onPress={() => onQuestionPress(reply)} 
                     style={styles.questionContainer}
@@ -25,9 +22,9 @@ const SuggestedReplies = ({ replies, onQuestionPress }: SuggestedRepliesProps) =
                             {reply}
                         </EPMText>
                     </View>
-                </Pressable>
+                </TouchableOpacity>
             ))}
-        </ScrollView>
+        </View>
     )
 };
 
@@ -36,7 +33,9 @@ export default React.memo(SuggestedReplies);
 const styles = StyleSheet.create({
     container: {
         paddingHorizontal: 15,
-        gap: 10
+        gap: 10,
+        zIndex: 1,
+        flexDirection: "row"
     },
 
     questionContainer: {
@@ -45,16 +44,18 @@ const styles = StyleSheet.create({
         backgroundColor: "#1E1E1E",
         borderRadius: 20,
         justifyContent: "center",
-        marginBottom: 10,
-        maxWidth: 150
+        marginBottom: 10
     },
 
     questionContent: {
-        paddingHorizontal: 16,
-        paddingVertical: 10
+        paddingVertical: 10,
+        justifyContent: "center",
+        alignItems: "center",
+        maxWidth: 230
     },
 
     questionTitle: {
-        fontSize: 14
+        fontSize: 14,
+        paddingHorizontal: 20
     }
 });

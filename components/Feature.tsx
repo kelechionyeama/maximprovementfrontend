@@ -9,6 +9,10 @@ interface OptionProps {
     title: string;
     icon: any;
     params: string;
+    defaultsReplies: {
+        question: string;
+        replies: string[];
+    }[];
     active?: boolean;
 };
 
@@ -28,14 +32,14 @@ const ICON_SIZE_MAP = {
     styleUpgrade: "medium"
 } as const;
 
-const Feature = ({ title, icon, params, active = true}: OptionProps) => {
+const Feature = ({ title, icon, params, defaultsReplies, active = true}: OptionProps) => {
     const iconSize = ICON_SIZE_MAP[params as keyof typeof ICON_SIZE_MAP] || "small";
 
     const handleNavigate = () => {
         if (title === "Get set up") {
             router.push("/getSetUpChat");
         } else {
-            const feature = { title, icon, params };
+            const feature = { title, icon, params, defaultsReplies };
             router.push({ pathname: "/chat", params: { feature: JSON.stringify(feature) } });
         }
     };
@@ -60,7 +64,7 @@ const Feature = ({ title, icon, params, active = true}: OptionProps) => {
 					style={styles.gradientBorder}
 				/>
 
-                <EPBText style={{ fontSize: 16, color: active ? "#E0E0E0" : "#5a5a5a" }}>
+                <EPBText color={active ? "#E0E0E0" : "#5a5a5a"} style={{ fontSize: 16 }}>
                     {title}
                 </EPBText>
             </View>

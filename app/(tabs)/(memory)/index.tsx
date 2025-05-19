@@ -1,11 +1,11 @@
+import { handleEnableFaceId } from '@/utils/faceIdAuth';
 import EvilIcons from '@expo/vector-icons/EvilIcons';
+import { Image } from 'expo-image';
 import { useNavigation } from 'expo-router';
 import React from 'react';
 import { Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { EPMText, EPRText, EPSBText } from '../../../StyledText';
-import { Image } from 'expo-image';
 import { Button } from '../../../components/Button';
-import { handleEnableFaceId } from '@/app/utils/faceIdAuth';
+import { EPMText, EPRText, EPSBText } from '../../../StyledText';
 
 const privateMemoryData = [
   {
