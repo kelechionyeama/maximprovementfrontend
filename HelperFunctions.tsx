@@ -1,8 +1,8 @@
+
 import * as Haptics from "expo-haptics";
-import { Linking } from "react-native";
-import { appInfo } from "./config";
 import * as StoreReview from "expo-store-review";
-import { Platform } from "react-native";
+import { Linking, Platform } from "react-native";
+import { appInfo } from "./config";
 
 // DELAY FOR A VARIABLE TIME
 export function wait(timeout: number) {
@@ -67,4 +67,35 @@ export const leaveRating = async () => {
             }
         }
     } catch (e) {}
+};
+
+// CONVERT FIREBASE DATE TO CHAT HISTORY DATE
+export const formatChatHistoryDate = (timestamp: any): string => {
+    let date: Date;
+
+    // IF IT'S A FIRESTORE TIMESTAMP OBJECT
+    if (timestamp && typeof timestamp.toDate === "function") {
+        date = timestamp.toDate();
+    }
+    // IF IT'S A PLAIN OBJECT WITH _SECONDS (FROM FIRESTORE REST/SERIALIZED)
+    else if (timestamp && typeof timestamp._seconds === "number") {
+        date = new Date(timestamp._seconds * 1000);
+    }
+    // IF IT'S ALREADY A JS DATE
+    else if (timestamp instanceof Date) {
+        date = timestamp;
+    }
+    // FALLBACK: TRY TO PARSE AS DATE STRING
+    else {
+        date = new Date(timestamp);
+    }
+
+    const options: Intl.DateTimeFormatOptions = {
+        weekday: "short",
+        month: "2-digit",
+        day: "2-digit"
+    };
+
+    const formatted = date.toLocaleDateString("en-US", options);
+    return formatted.replace(/,?\\s?\\d{4}/, "").replace(",", "");
 };

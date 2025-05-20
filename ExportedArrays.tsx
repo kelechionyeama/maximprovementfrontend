@@ -72,3 +72,42 @@ export const needHelpWith = [
     "Upgrading my style",
     "Getting fit fast"
 ];
+
+export const chatHistoryMapping = {
+    askMeAnything: {
+        title: "Ask me anything",
+        icon: require("@/assets/icons/8Ball.png")
+    },
+    datingAndRelationships: {
+        title: "Dating & relationships",    
+        icon: require("@/assets/icons/heart.png")
+    },
+    personalityTest: {
+        title: "Personality test",
+        icon: require("@/assets/icons/performingArts.png")
+    },
+    howToBeLiked: {
+        title: "How to be liked",
+        icon: require("@/assets/icons/cool.png")
+    },
+    makingRealFriends: {
+        title: "Making real friends",
+        icon: require("@/assets/icons/fistBump.png")
+    },
+    influencingPeople: {
+        title: "Influencing people",
+        icon: require("@/assets/icons/bullseye.png")
+    },
+    findingMotivation: {
+        title: "Finding motivation",
+        icon: require("@/assets/icons/rockstarHand.png")
+    },
+    styleUpgrade: {
+        title: "Style upgrade",
+        icon: require("@/assets/icons/sunglasses.png")
+    },
+    getFitFast: {
+        title: "Get fit fast",
+        icon: require("@/assets/icons/dumbell.png")
+    }
+};

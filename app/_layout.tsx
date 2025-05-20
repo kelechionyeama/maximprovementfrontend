@@ -1,4 +1,5 @@
 import { getDefaultRepliesApi } from '@/api/DefaultReplies';
+import { useDefaultRepliesStore } from '@/store/defaultReplies';
 import { useFonts } from 'expo-font';
 import { router, Stack } from 'expo-router';
 import React from 'react';
@@ -14,6 +15,9 @@ export default function RootLayout() {
 		EPSB: require('../assets/fonts/Epilogue-SemiBold.ttf'),
 		EPB: require('../assets/fonts/Epilogue-Bold.ttf')
 	});
+
+	const defaultReplies = useDefaultRepliesStore((state) => state.defaultReplies)
+	const { setDefaultReplies } = useDefaultRepliesStore();
 
 
 	const getDefaults = async () => {
@@ -36,13 +40,9 @@ export default function RootLayout() {
 
 		(async () => {
 			const response = await getDefaults();
+			setDefaultReplies(response);
 
-			router.replace({
-				pathname: "/(tabs)/(home)",
-				params: {
-					feature: JSON.stringify(response)
-				}
-			});
+			router.replace("/(tabs)/(home)");
 		})()
 	}, [fontsLoaded]);
 

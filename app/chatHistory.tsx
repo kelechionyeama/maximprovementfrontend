@@ -1,12 +1,18 @@
-import { Feather } from '@expo/vector-icons';
-import { router, useNavigation } from 'expo-router';
 import React from 'react';
-import { FlatList, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, SafeAreaView, StyleSheet,
+	TouchableOpacity, View } from 'react-native';
+import { chatHistoryApi } from '@/api/ChatHistoryApi';
+import { chatHistoryMapping } from '@/ExportedArrays';
+import { formatChatHistoryDate } from '@/HelperFunctions';
+import { Feather } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { router, useNavigation } from 'expo-router';
 import { EPBText, EPMText, EPRText, EPSBText } from '../StyledText';
 
 interface Chat {
     title: string;
     tag: string;
+	icon: any;
 };
 
 interface Section {
@@ -15,76 +21,11 @@ interface Section {
     chats: Chat[];
 };
 
-const chatHistoryData: Section[] = [
-  {
-    date: "Fri 09/05",
-    id: "today-1",
-    chats: [
-      {
-        title: "What is the best way to get people to like me?",
-        tag: "How to be liked 😎"
-      },
-      {
-        title: "What is the best feeling ever?",
-        tag: "Ask me anything 🎱"
-      }
-    ]
-  },
-  {
-    date: "Thu 08/05",
-    id: "yesterday-1",
-    chats: [
-       {
-        title: "What is the best way to get people to like me?",
-        tag: "Ask me anything 🎱"
-      },
-      {
-        title: "What is the best way to get people to like me?",
-        tag: "Ask me anything 🎱"
-      },
-      {
-        title: "What is the best way to get people to like me?",
-        tag: "Ask me anything 🎱"
-      }
-    ]
-  },
-  {
-    date: "Wed 07/05",
-    id: "lastweek-1",
-    chats: [
-      {
-        title: "What is the best way to get people to like me?",
-        tag: "Ask me anything 🎱"
-      },
-      {
-        title: "What is the best way to get people to like me?",
-        tag: "Ask me anything 🎱"
-      },
-      {
-        title: "What is the best way to get people to like me?",
-        tag: "Ask me anything 🎱"
-      }
-    ]
-  },
-  {
-    date: "Tue 06/05", 
-    id: "lastmonth-1",
-    chats: [
-      {
-        title: "What is the best way to get people to like me?",
-        tag: "Ask me anything 🎱"
-      },
-      {
-        title: "What is the best way to get people to like me?",
-        tag: "Ask me anything 🎱"
-      }
-    ]
-  }
-];
-
 const ChatHistory = () => {
 
-	const [chatHistory, setChatHistory] = React.useState<Section[]>(chatHistoryData);
+	const [unformattedChatHistory, setUnformattedChatHistory] = React.useState<any[]>([]);
+	const [chatHistory, setChatHistory] = React.useState<Section[]>([]);
+	const [loading, setLoading] = React.useState<boolean>(true);
 
     const navigation = useNavigation();
 
@@ -106,39 +47,120 @@ const ChatHistory = () => {
     }, []);
 
 
+	// GET CHAT HISTORY
+	React.useEffect(() => {
+		(async () => {
+			try {
+				const response = await chatHistoryApi({}, "get");		
+				const data = await response?.json();
+				if (!data || !Array.isArray(data)) {
+					setLoading(false);
+					return;
+				};
+	
+				const sections = data.map((doc: any) => {
+					return {
+						date: formatChatHistoryDate(doc?.updatedAt),
+						id: doc?.id,
+						chats: [
+							{
+								title: doc?.messagesArray[2]?.content,
+								tag: chatHistoryMapping[doc?.feature as keyof typeof chatHistoryMapping]?.title,
+								icon: chatHistoryMapping[doc?.feature as keyof typeof chatHistoryMapping]?.icon
+							}
+						]
+					};
+				});
+
+				setUnformattedChatHistory(data);
+				setChatHistory(sections);
+				setLoading(false);
+			} catch (error) {
+				setLoading(false);
+				Alert.alert("Oops!", "We're working on a fix, please try again later.");
+			}
+		})();
+	}, []);
+
+
+	// NAVIGATE TO CHAT
+	const handleNavigate = (id: string) => {
+		const chat = unformattedChatHistory.find((chat: any) => chat.id === id);
+
+		const title = chatHistoryMapping[chat?.feature as keyof typeof chatHistoryMapping]?.title;
+		const params = chat?.feature;
+		const chatHistory = chat;
+
+		const feature = { title, params, chatHistory }; 
+		router.push({ pathname: "/chat", params: { feature: JSON.stringify(feature) } });
+	};
+
+
     const renderSection = ({ item: section }: { item: Section }) => (
         <React.Fragment>
             <EPBText color="#B0B0B0" style={styles.dateHeader}>
                 {section.date}
             </EPBText>
             
-            {section.chats.map((chat: Chat, chatIndex: number) => (
-                <View key={`${section.id}-chat-${chatIndex}`} style={styles.chatItem}>
+            {section.chats.map((chat: Chat) => (
+                <TouchableOpacity onPress={() => handleNavigate(section.id)} key={section.id} style={styles.chatItem}>
                     <View style={styles.chatContent}>
                         <EPMText style={styles.chatTitle}>
                             {chat.title}
                         </EPMText>
-                    
-                        <EPRText color="#B0B0B0" style={styles.tagText}>
-                            {chat.tag}
-                        </EPRText>
+						
+						<View style={styles.row}>
+							<EPRText color="#B0B0B0" style={styles.tagText}>
+								{chat.tag}
+							</EPRText>
+
+							<Image source={chat.icon} style={styles.image} />
+						</View>
                     </View>
-                </View>
+                </TouchableOpacity>
             ))}             
         </React.Fragment>
     );
 
 
+	// ALERT DELETE FROM PRIVATE MEMORY
+	const alertClearChatHistory = () => {
+        Alert.alert("DANGER ZONE!!!", "Are you sure you want to clear your chat history?", [
+            { text: "Cancel", style: "cancel" },
+            { text: "Delete", style: "destructive", onPress: () => clearChatHistory() }
+        ]);
+    };
+
+
+	// CLEAR CHAT HISTORY
+	const clearChatHistory = async () => {
+		try {
+			const response = await chatHistoryApi({}, "clear");
+			const data = await response?.json();
+
+			if (data?.success) {
+				setChatHistory([]);
+				setLoading(false);
+			} else {
+				Alert.alert("Oops!", "Something went wrong. Please try again later.");
+			}
+		} catch (error) {}
+	};
+
+
     return (
         <SafeAreaView style={styles.container}>
-			{chatHistory.length > 0 ? (
-				<FlatList
-					data={chatHistory}
-					renderItem={renderSection}
-					keyExtractor={item => item.id}
-					contentContainerStyle={styles.contentContainer}
-					showsVerticalScrollIndicator={false}
-				/>
+			{loading ? (
+				<ActivityIndicator size="small" style={{ top: "45%" }} color="white" />
+			) : (
+				chatHistory.length > 0 ? (
+					<FlatList
+						data={chatHistory}
+						renderItem={renderSection}
+						keyExtractor={item => item.id}
+						contentContainerStyle={styles.contentContainer}
+						showsVerticalScrollIndicator={false}
+					/>
 				) : (
 					<View style={styles.noPrivateMemoriesContainer}>
 						<EPRText style={styles.noPrivateMemoriesText}>
@@ -146,13 +168,13 @@ const ChatHistory = () => {
 						</EPRText>
 					</View>
 				)
-			}
+			)}
 
-            {/* <TouchableOpacity style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.buttonContainer} onPress={alertClearChatHistory}>
                 <EPRText color="#FF5252" style={styles.text}>
                     Clear Chat History
                 </EPRText>
-            </TouchableOpacity> */}
+            </TouchableOpacity>
         </SafeAreaView>
     )
 };
@@ -175,8 +197,8 @@ const styles = StyleSheet.create({
     text: {
         fontSize: 16,
         textAlign: 'center',
-        width: "100%",
-        marginTop: 30
+        marginTop: 30,
+		width: "100%"
     },
 
     buttonContainer: {
@@ -221,5 +243,17 @@ const styles = StyleSheet.create({
 
     noPrivateMemoriesText: {
         fontSize: 20
-    }
+    },
+
+	image: {
+		width: 20,
+		height: 20,
+		marginTop: 5
+	},
+
+	row: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 5
+	}
 });

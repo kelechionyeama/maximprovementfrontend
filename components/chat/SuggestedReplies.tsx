@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
+import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { EPMText } from "../../StyledText";
 
 interface SuggestedRepliesProps {
@@ -9,23 +9,31 @@ interface SuggestedRepliesProps {
 };
 
 const SuggestedReplies = ({ replies, onQuestionPress, display }: SuggestedRepliesProps) => {
+    if (!display) return null;
+
     return (
-        <View style={[styles.container, { display: display ? "flex" : "none", zIndex: 1 }]}>
-            {replies?.map((reply) => (
+        <FlatList
+            data={replies}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item}
+            contentContainerStyle={styles.container}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+            renderItem={({ item }) => (
                 <TouchableOpacity 
-                    key={reply} 
-                    onPress={() => onQuestionPress(reply)} 
+                    onPress={() => onQuestionPress(item)} 
                     style={styles.questionContainer}
                 >
                     <View style={styles.questionContent}>
                         <EPMText style={styles.questionTitle}>
-                            {reply}
+                            {item}
                         </EPMText>
                     </View>
                 </TouchableOpacity>
-            ))}
-        </View>
-    )
+            )}
+        />
+    );
 };
 
 export default React.memo(SuggestedReplies);

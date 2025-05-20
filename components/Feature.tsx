@@ -1,18 +1,14 @@
+import React from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
 import { EPBText } from '../StyledText';
 
 interface OptionProps {
     title: string;
     icon: any;
     params: string;
-    defaultsReplies: {
-        question: string;
-        replies: string[];
-    }[];
     active?: boolean;
 };
 
@@ -32,14 +28,14 @@ const ICON_SIZE_MAP = {
     styleUpgrade: "medium"
 } as const;
 
-const Feature = ({ title, icon, params, defaultsReplies, active = true}: OptionProps) => {
+const Feature = ({ title, icon, params, active = true}: OptionProps) => {
     const iconSize = ICON_SIZE_MAP[params as keyof typeof ICON_SIZE_MAP] || "small";
 
     const handleNavigate = () => {
         if (title === "Get set up") {
             router.push("/getSetUpChat");
         } else {
-            const feature = { title, icon, params, defaultsReplies };
+            const feature = { title, params };
             router.push({ pathname: "/chat", params: { feature: JSON.stringify(feature) } });
         }
     };
@@ -59,7 +55,7 @@ const Feature = ({ title, icon, params, defaultsReplies, active = true}: OptionP
 
             <View style={[styles.onboardingItemRight, { opacity: active ? 1 : 0.5 }]}>
 				<LinearGradient
-					colors={active ? ['#000000','#212121' ] : ['#000000', '#0d0d0d' ]}
+					colors={active ? ["#000000", "#212121"] : ["#000000", "#0d0d0d"]}
 					locations={[0.1, 0.8]}
 					style={styles.gradientBorder}
 				/>

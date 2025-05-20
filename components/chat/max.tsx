@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 import { lightHaptic } from '../../HelperFunctions';
 import { EPBText, EPMText } from '../../StyledText';
 
-const MaxText = ({ text, onComplete }: { text: string, onComplete?: () => void }) => {
+const MaxText = ({ text, onComplete, stream = true }: { text: string, onComplete?: () => void, stream?: boolean }) => {
 
     const [displayedText, setDisplayedText] = React.useState("");
     const [isComplete, setIsComplete] = React.useState(false);
@@ -15,29 +15,30 @@ const MaxText = ({ text, onComplete }: { text: string, onComplete?: () => void }
         setIsComplete(false);
 
         const streamText = async () => {
-            if (!text) return; // GUARD AGAINST UNDEFINED TEXT
-            
+            if (!text) return;
+            if (!stream) {
+                setDisplayedText(text);
+                setIsComplete(true);
+                if (onComplete) onComplete();
+                return;
+            };
+
             while (currentIndex < text.length) {
                 const nextChar = text[currentIndex];
-
-                if (nextChar) { // ONLY UPDATE IF WE HAVE A VALID CHARACTER
+                if (nextChar) {
                     setDisplayedText(prev => prev + nextChar);
-                    
-                    // CHECK IF WE'VE REACHED A WORD BOUNDARY (SPACE OR END OF TEXT)
                     if (nextChar === " " || currentIndex === text.length - 1) {
                         lightHaptic();
-                    };
-
-                    // ADD PAUSE FOR NEWLINES
+                    }
                     if (nextChar === "\n" || nextChar === "." || nextChar === ",") {
                         await new Promise(resolve => setTimeout(resolve, 150));
                     } else {
                         await new Promise(resolve => setTimeout(resolve, 30));
-                    };
-                };
-
+                    }
+                }
                 currentIndex++;
             };
+
             setIsComplete(true);
             if (onComplete) onComplete();
         };
@@ -46,9 +47,9 @@ const MaxText = ({ text, onComplete }: { text: string, onComplete?: () => void }
 
         // CLEANUP FUNCTION
         return () => {
-            currentIndex = text.length; // STOP THE STREAMING
+            currentIndex = text?.length ?? 0;
         };
-    }, [text]);
+    }, [text, stream]);
 
     return (
         <>
@@ -73,7 +74,6 @@ const styles = StyleSheet.create({
     },
 
     messageText: {
-        color: "white",
         fontSize: 16,
         marginBottom: 20
     },

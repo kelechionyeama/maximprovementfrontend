@@ -12,7 +12,6 @@ import { allFeatures, FeatureItem } from "../../../ExportedArrays";
 const Home = () => {
 
     const defaults = useLocalSearchParams();
-    const defaultsReplies = JSON.parse(defaults.feature as string);
 
     const [isUser, setIsUser] = React.useState(true);
 
@@ -78,7 +77,6 @@ const Home = () => {
                                 title={item.title}
                                 icon={item.icon} 
                                 params={item.params}
-                                defaultsReplies={defaultsReplies[item.params]}
                             />
                         ) : (
                             <Feature 
@@ -86,7 +84,6 @@ const Home = () => {
                                 title={item.title} 
                                 active={item.title === "Get set up" ? true : false} 
                                 icon={item.icon} 
-                                defaultsReplies={defaultsReplies[item.params]}
                                 params={item.params} 
                             />
                         )

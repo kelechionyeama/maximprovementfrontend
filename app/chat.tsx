@@ -1,18 +1,21 @@
+import { chatApi } from '@/api/ChatApi';
 import { LoadingBubble } from '@/components/chat/loadingBubble';
 import SuggestedReplies from '@/components/chat/SuggestedReplies';
 import { wait } from '@/HelperFunctions';
+import { useDefaultRepliesStore } from '@/store/defaultReplies';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React from 'react';
-import { Animated, FlatList, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Animated, FlatList, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView,
+    StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import MaxText from '../components/chat/max';
 import YouText from '../components/chat/you';
 import { EPBText } from '../StyledText';
-import { chatApi } from '@/api/ChatApi';
 
 interface ChatMessage {
     text: string;
     isUser: boolean;
+    stream?: boolean;
 };
 
 const Chat = () => {
@@ -21,19 +24,19 @@ const Chat = () => {
     const [value, setValue] = React.useState("");
     const [messageId, setMessageId] = React.useState("");
     const [loading, setLoading] = React.useState(true);
-    const [maxIsStreaming, setMaxIsStreaming] = React.useState(false);
 
     const keyboardOpacity = React.useRef(new Animated.Value(0)).current;
     const getFeature = useLocalSearchParams<{ feature: string }>();
     const feature = JSON.parse(getFeature.feature);
-
-    const openingText = feature?.defaultsReplies?.openingText;
 
     const flatListRef = React.useRef<FlatList>(null);
     const inputRef = React.useRef<TextInput>(null);
 
     const navigation = useNavigation();
 
+    const { defaultReplies } = useDefaultRepliesStore();
+    const openingText = defaultReplies[feature?.params]?.openingText;
+    const chatHistory = feature?.chatHistory;
 
     // HEADER NAVIGATION
     React.useLayoutEffect(() => {
@@ -62,11 +65,33 @@ const Chat = () => {
     // SHOW OPENING MESSAGE
     React.useEffect(() => {
         (async () => {
-            setMaxIsStreaming(true);
-            setChatConversation([{ text: openingText, isUser: false }]);
-            setLoading(false);
+            // IF THIS IS A CHAT HISTORY, SHOW THE CHAT HISTORY
+            if (chatHistory) {
+                console.log(chatHistory.id)
+                setLoading(false);
+
+                const conversation = chatHistory?.messagesArray?.slice(1)?.map((message: any) => ({
+                    text: message.content,
+                    isUser: message.role === "user",
+                    stream: false
+                })) || [];
+                setChatConversation(conversation);
+
+                Animated.timing(keyboardOpacity, {
+                    toValue: 1,
+                    duration: 1000,
+                    useNativeDriver: true
+                }).start();
+
+                await wait(500);
+                inputRef.current?.focus();
+
+            } else { // IF NEW CHAT
+                setChatConversation([{ text: openingText, isUser: false }]);
+                setLoading(false);
+            }
         })();
-    }, []);
+    }, [openingText]);
 
     
     // SCROLL TO END AFTER NEW MESSAGE
@@ -80,32 +105,24 @@ const Chat = () => {
         const message = text || value;
         if (!message.trim()) return;
 
-        // setMaxIsStreaming(false);
-        setValue("");
-        setChatConversation([...chatConversation, { text: message, isUser: true }]);
+        value.trim()?.length > 0 && setValue("");
+        setChatConversation((prev) => [...prev, { text: message, isUser: true, stream: true }]);
 
-        // return;
-
-        await wait(200);
-        Keyboard.dismiss();
         scrollToEnd();
-
         setLoading(true);
 
         // SEND MESSAGE TO SERVER
         const response = await chatApi({
             message,
-            messageId: messageId,
-            feature: feature?.params
+            messageId: chatHistory ? chatHistory?.id : messageId,
+            feature: feature?.params,
+            usedDefaultReplies: text ? true : false
         });
 
         const responseData = await response?.json();
 
-        // console.log("Response Data", responseData.data);
-        // return;
-
         setLoading(false);
-        setChatConversation((prev) => [...prev, { text: responseData.data.message, isUser: false }]);
+        setChatConversation((prev) => [...prev, { text: responseData.data.message, isUser: false, stream: true }]);
         scrollToEnd();
         setMessageId(responseData.data.messageId);
     };
@@ -113,12 +130,10 @@ const Chat = () => {
 
     // HANDLE MAX TEXT COMPLETION
     const getOnCompleteHandler = (item: ChatMessage, index: number) => {
-        const streaming = index === 0 && !item.isUser;
-
         const lastMessage = chatConversation[chatConversation.length - 1];
 
         // ONLY SHOW THE KEYBOARD AFTER THE OPENING TEXT
-        if (lastMessage.text.includes(openingText)) {
+        if (lastMessage?.text?.includes(openingText)) {
             return async () => {
                 Animated.timing(keyboardOpacity, {
                     toValue: 1,
@@ -131,6 +146,18 @@ const Chat = () => {
             };
         };
     };
+
+    // ADD KEYBOARD LISTENERS
+    React.useEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener(
+            "keyboardDidShow",
+            () => {
+                scrollToEnd();
+            }
+        );
+
+        return () => keyboardDidShowListener.remove();
+    }, []);
 
 
     return (
@@ -145,20 +172,23 @@ const Chat = () => {
                     data={chatConversation}
                     contentContainerStyle={styles.flatList}
                     showsVerticalScrollIndicator={false}
-                    style={{ marginBottom: 50, paddingBottom: 10 }}
+                    style={{ marginBottom: 20, paddingBottom: 10 }}
                     ListFooterComponent={loading ? <LoadingBubble /> : null}
                     onContentSizeChange={scrollToEnd}
+                    onScrollBeginDrag={Keyboard.dismiss}
+                    nestedScrollEnabled
                     renderItem={({ item, index }) => {
                         return item.isUser ? <YouText text={item.text} /> :
-                            <MaxText text={item.text} onComplete={getOnCompleteHandler(item, index)} />;
+                            <MaxText text={item.text} stream={item.stream !== false}
+                                onComplete={getOnCompleteHandler(item, index)} />;
                     }}
                 />
 
                 <Animated.View style={{ opacity: keyboardOpacity }}>
                     <SuggestedReplies 
-                        replies={feature?.defaultsReplies?.quickReplies || []} 
+                        replies={defaultReplies[feature?.params]?.quickReplies || []} 
                         onQuestionPress={(text) => handleSend(text)}
-                        display={chatConversation.length > 1 ? false : true}
+                        display={chatConversation.length > 1 || chatHistory ? false : true}
                     />
 
                     <View style={styles.textInputContainer}>
@@ -196,8 +226,8 @@ const styles = StyleSheet.create({
     },
 
     flatList: {
-        paddingHorizontal: 5,
-        paddingTop: 10,
+        paddingHorizontal: 10,
+        paddingTop: 10
     },
 
     textInputContainer: {
