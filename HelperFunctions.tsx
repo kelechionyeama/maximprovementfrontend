@@ -1,4 +1,3 @@
-
 import * as Haptics from "expo-haptics";
 import * as StoreReview from "expo-store-review";
 import { Linking, Platform } from "react-native";
@@ -98,4 +97,34 @@ export const formatChatHistoryDate = (timestamp: any): string => {
 
     const formatted = date.toLocaleDateString("en-US", options);
     return formatted.replace(/,?\\s?\\d{4}/, "").replace(",", "");
+};
+
+// FIND THE FIRST MESSAGE IN CHAT CONVERSATION SENT TODAY
+export const findFirstTodayMessageIndex = (chatConversation: { timestamp?: string }[]): number => {
+    const today = new Date();
+    return chatConversation.findIndex(msg => {
+        if (!msg.timestamp) return false;
+        
+        const msgDate = new Date(msg.timestamp);
+        return (
+            msgDate.getDate() === today.getDate() &&
+            msgDate.getMonth() === today.getMonth() &&
+            msgDate.getFullYear() === today.getFullYear()
+        );
+    });
+};
+
+// CHECK IF ALL MESSAGES ARE FROM TODAY
+export const areAllMessagesFromToday = (chatConversation: { timestamp?: string }[]): boolean => {
+    const today = new Date();
+    return chatConversation.length > 0 && chatConversation.every(msg => {
+        if (!msg.timestamp) return false;
+
+        const msgDate = new Date(msg.timestamp);
+        return (
+            msgDate.getDate() === today.getDate() &&
+            msgDate.getMonth() === today.getMonth() &&
+            msgDate.getFullYear() === today.getFullYear()
+        );
+    });
 };

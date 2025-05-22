@@ -6,10 +6,8 @@ import { handleEnableFaceId } from '@/utils/faceIdAuth';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from 'expo-router';
 import React from 'react';
-import {
-    Animated, FlatList, Keyboard, KeyboardAvoidingView, Platform,
-    SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View
-} from 'react-native';
+import { Animated, FlatList, Keyboard, KeyboardAvoidingView, Platform,
+    SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { LoadingBubble } from '../components/chat/loadingBubble';
 import MaxText from '../components/chat/max';
 import YouText from '../components/chat/you';
@@ -537,7 +535,7 @@ const GetSetUpChat = () => {
                     data={chatConversation}
                     contentContainerStyle={styles.flatList}
                     showsVerticalScrollIndicator={false}
-                    style={{ marginBottom: 200, paddingHorizontal: 5 }}
+                    style={{ marginBottom: 200, paddingHorizontal: 10 }}
                     ListFooterComponent={loading ? <LoadingBubble flatListRef={flatListRef} /> : null}
                     renderItem={({ item, index }) => {
                         if (item.showPrivateMemoryBox) {

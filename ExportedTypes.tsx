@@ -16,6 +16,8 @@ export interface ChatHistory {
     messageArray: {
         content: string;
         role: string;
+        timestamp: string;
     }[];
     isDeleted: boolean;
+    chatLength: number;
 };

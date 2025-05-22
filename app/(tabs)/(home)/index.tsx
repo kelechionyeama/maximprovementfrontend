@@ -11,8 +11,6 @@ import { allFeatures, FeatureItem } from "../../../ExportedArrays";
 
 const Home = () => {
 
-    const defaults = useLocalSearchParams();
-
     const [isUser, setIsUser] = React.useState(true);
 
     const navigation = useNavigation();

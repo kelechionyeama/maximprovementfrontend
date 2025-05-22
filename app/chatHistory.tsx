@@ -1,9 +1,9 @@
 import React from 'react';
-import { ActivityIndicator, Alert, FlatList, SafeAreaView, StyleSheet,
-	TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, SafeAreaView,
+    StyleSheet, TouchableOpacity, View } from 'react-native';
 import { chatHistoryApi } from '@/api/ChatHistoryApi';
 import { chatHistoryMapping } from '@/ExportedArrays';
-import { formatChatHistoryDate } from '@/HelperFunctions';
+import { formatChatHistoryDate, wait } from '@/HelperFunctions';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router, useNavigation } from 'expo-router';
@@ -13,6 +13,7 @@ interface Chat {
     title: string;
     tag: string;
 	icon: any;
+	id: string;
 };
 
 interface Section {
@@ -58,24 +59,39 @@ const ChatHistory = () => {
 					return;
 				};
 	
-				const sections = data.map((doc: any) => {
-					return {
-						date: formatChatHistoryDate(doc?.updatedAt),
-						id: doc?.id,
-						chats: [
-							{
-								title: doc?.messagesArray[2]?.content,
-								tag: chatHistoryMapping[doc?.feature as keyof typeof chatHistoryMapping]?.title,
-								icon: chatHistoryMapping[doc?.feature as keyof typeof chatHistoryMapping]?.icon
-							}
-						]
+				// GROUP CHATS BY DATE
+				const grouped = data.reduce((acc: any, doc: any) => {
+					const date = formatChatHistoryDate(doc?.updatedAt);
+					if (!acc[date]) {
+						acc[date] = [];
 					};
-				});
+
+					// FIND THE LAST USER MESSAGE
+					const userMessages = (doc?.messagesArray || []).filter((msg: any) => msg.role === "user");
+					const lastUserMessage = userMessages.length > 0 ? userMessages[userMessages.length - 1].content : "";
+
+					acc[date].push({
+						title: lastUserMessage,
+						tag: chatHistoryMapping[doc?.feature as keyof typeof chatHistoryMapping]?.title,
+						icon: chatHistoryMapping[doc?.feature as keyof typeof chatHistoryMapping]?.icon,
+						id: doc?.id
+					});
+					return acc;
+				}, {});
+
+				// CONVERT GROUPED OBJECT TO ARRAY OF SECTIONS
+				const sections = Object.keys(grouped).map(date => ({
+					date,
+					id: date, //  or use a unique id if needed
+					chats: grouped[date]
+				}));
 
 				setUnformattedChatHistory(data);
 				setChatHistory(sections);
 				setLoading(false);
 			} catch (error) {
+
+                await wait(3000);
 				setLoading(false);
 				Alert.alert("Oops!", "We're working on a fix, please try again later.");
 			}
@@ -103,7 +119,7 @@ const ChatHistory = () => {
             </EPBText>
             
             {section.chats.map((chat: Chat) => (
-                <TouchableOpacity onPress={() => handleNavigate(section.id)} key={section.id} style={styles.chatItem}>
+                <TouchableOpacity onPress={() => handleNavigate(chat.id)} key={chat.id} style={styles.chatItem}>
                     <View style={styles.chatContent}>
                         <EPMText style={styles.chatTitle}>
                             {chat.title}

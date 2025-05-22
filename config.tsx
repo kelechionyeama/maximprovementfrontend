@@ -4,4 +4,6 @@ const auth = ""
 
 const BASE_URL = "http://10.101.196.8:3333/api";
 
-export { appInfo, BASE_URL, auth };
+const isTestFlightBuild = false;
+
+export { appInfo, BASE_URL, auth, isTestFlightBuild };
