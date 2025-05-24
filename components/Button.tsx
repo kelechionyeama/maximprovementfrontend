@@ -21,8 +21,6 @@ export const Button = ({ label, disabled, style, onPress, textColor = "white", l
         };
     };
 
-    const finalTextColor = disabled ? '#666' : textColor;
-
     return (
         <TouchableOpacity
             style={[
@@ -35,7 +33,7 @@ export const Button = ({ label, disabled, style, onPress, textColor = "white", l
             {...props}
         >
             {loading ? (
-                <ActivityIndicator size="small" color={finalTextColor} />
+                <ActivityIndicator size="small" color={"black"} />
             ) : (
                 <View style={styles.content}>
                     <EPBText color="black" style={{ fontSize: 16 }}>

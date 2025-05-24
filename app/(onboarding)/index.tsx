@@ -1,13 +1,88 @@
+import { sendOnboardingData } from '@/api/OnboardingApi';
+import { deviceInformation, privacyPolicy, termsOfService } from '@/HelperFunctions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { getAuth, signInAnonymously } from 'firebase/auth';
 import React from 'react';
-import { SafeAreaView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button } from '../../components/Button';
 import { EPRText } from '../../StyledText';
-import { termsOfService, privacyPolicy } from '@/HelperFunctions';
+// import analytics from "@react-native-firebase/analytics";
+import { appInfo, db } from '@/config';
+import { useUserProfileStore } from '@/store/userProfileStore';
+import { arrayUnion, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { UserProfile } from '@/ExportedTypes';
 
 const Index = () => {
+
+	const [loading, setLoading] = React.useState(false);
+
+	const { setUserProfile } = useUserProfileStore();
+
+
+	// GET STARTED
+	const getStarted = async () => {
+		try {
+			setLoading(true);
+
+            const deviceId = deviceInformation.deviceId;
+
+            // SIGN USER IN AND PERSIST AUTH
+            const auth = getAuth();
+            const authUser = await signInAnonymously(auth);
+
+			const uid = authUser.user.uid;
+
+            await setAuthPersistence(uid);
+
+			// IDENTIFY USER IN SUPERWALL AND REVENUECAT
+			// Superwall.shared.identify({ userId: deviceId });
+			// Purchases.logIn(userId: deviceId);
+
+			const userRef = doc(db, "users", deviceId);
+
+			// DOES THIS USER ALREADY EXSIST?
+            const userFound = await getDoc(userRef);
+            if (userFound.exists() && userFound.data()?.deviceId) {
+                await updateDoc(userRef, { sessions: arrayUnion(authUser?.user?.uid), appInfo });
+				setUserProfile(userFound.data() as UserProfile);
+
+				router.replace("/(tabs)/(home)");
+                return;
+            };
+
+
+			// SEND TO BACKEND TO CREATE NEW USER ACCOUNT
+			const { data } = await sendOnboardingData({ uid }, "createUser");
+
+			if (data.status === 200) {
+				// mixpanel.identify(deviceId);
+				// analytics().setUserId(deviceId);
+				router.replace({
+					pathname: "/(tabs)/(home)",
+					params: {
+						brandNewUser: "true"
+					}
+				});
+			};
+
+		} catch (error) {
+			console.log(error);
+		};
+	};
+
+
+	// AUTH PERSISTENCE (ANON AUTH)
+	const setAuthPersistence = async (uid: string) => {
+		try {
+			// SET PERSISTENCE TO "LOCAL" FOR PRESISTENT AUTHENTICATION STATE
+			await AsyncStorage.setItem("uid", uid);
+		} catch (error) {}
+	};
+
+	
 	return (
 		<SafeAreaView style={styles.container}>
 			<StatusBar style="light" />
@@ -19,6 +94,7 @@ const Index = () => {
 			<Image source={require("@/assets/images/getStarted.png")} style={styles.image} />
 
 			<Button 
+				loading={loading}
 				label="Get Started" 
 				onPress={() => router.push("/(tabs)/(home)")}
 			/>

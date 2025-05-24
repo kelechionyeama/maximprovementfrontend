@@ -3,7 +3,7 @@ import React from 'react';
 import { Animated, StyleSheet, FlatList } from 'react-native';
 import { EPBText } from '../../StyledText';
 
-export const LoadingBubble = ({ flatListRef }: { flatListRef?: React.RefObject<FlatList> }) => {
+export const LoadingBubble = ({ flatListRef, loadFaster = false }: { flatListRef?: React.RefObject<FlatList>, loadFaster?: boolean }) => {
 
     const [showLottie, setShowLottie] = React.useState(false);
     const textOpacity = React.useRef(new Animated.Value(0)).current;
@@ -11,11 +11,11 @@ export const LoadingBubble = ({ flatListRef }: { flatListRef?: React.RefObject<F
     React.useEffect(() => {
         Animated.timing(textOpacity, {
             toValue: 1,
-            duration: 500,
-            useNativeDriver: true,
+            duration: loadFaster ? 200 : 400,
+            useNativeDriver: true
         }).start(() => {
             flatListRef?.current?.scrollToEnd({ animated: true });
-            setTimeout(() => setShowLottie(true), 500);
+            setTimeout(() => setShowLottie(true), loadFaster ? 200 : 400);
         });
     }, []);
 

@@ -1,12 +1,16 @@
 import { Image } from 'expo-image';
-import React from 'react';
+import React from "react";
 import { Animated, StyleSheet, View } from 'react-native';
 import { EPMText, EPRText, EPSBText } from '../StyledText';
+import { useUserProfileStore } from '@/store/userProfileStore';
+import { generateSummary, capitalizeFirst } from '@/HelperFunctions';
 
 const PrivateMemoryBox = ({ privateMemoryBoxIsLocked }: { privateMemoryBoxIsLocked: boolean }) => {
 
     const firstOpacity = React.useRef(new Animated.Value(0)).current;
     const secondOpacity = React.useRef(new Animated.Value(0)).current;
+
+    const { userProfile } = useUserProfileStore();
 
 
     // UNLOCK THE MEMORY BOX
@@ -55,13 +59,13 @@ const PrivateMemoryBox = ({ privateMemoryBoxIsLocked }: { privateMemoryBoxIsLock
                     <View>
                         <Animated.View style={{ opacity: firstOpacity }}>
                             <EPMText style={styles.memoryText}>
-                                Kelechi needs advice on dating, staying fit and upgrading his style
+                                {generateSummary(userProfile?.firstName || "", userProfile?.problemsToSolve || [])}
                             </EPMText>
                         </Animated.View>
 
                         <Animated.View style={{ opacity: secondOpacity }}>
                             <EPMText style={styles.memoryText1}>
-                                Kelechi is not open to discussing about family matter
+                                {capitalizeFirst(userProfile?.firstName || "")} is {userProfile?.openToFamilyTalks ? "open" : "not open"} to discussing family matters
                             </EPMText>
                         </Animated.View>
                     </View>

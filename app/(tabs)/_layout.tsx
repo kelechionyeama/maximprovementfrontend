@@ -1,7 +1,12 @@
-import { Tabs } from 'expo-router';
 import { Image } from 'expo-image';
+import { Tabs } from 'expo-router';
+import { Pressable } from 'react-native';
+import { useUserProfileStore } from '@/store/userProfileStore';
 
 export default function TabsLayout() {
+
+    const { userProfile } = useUserProfileStore();
+    const isMemoryTabDisabled = userProfile?.begunOnboarding ? false : true;
 
     return (
         <Tabs screenOptions={{
@@ -53,6 +58,16 @@ export default function TabsLayout() {
                                 tintColor: focused ? "white" : "#BABABA"
                             }} 
                         />
+                    ),
+                    tabBarButton: (props) => (
+                        // @ts-ignore
+                        <Pressable
+                            {...props}
+                            disabled={isMemoryTabDisabled}
+                            style={[props.style, isMemoryTabDisabled && { opacity: 0.6 } ]}
+                        >
+                            {props.children}
+                        </Pressable>
                     )
                 }}
             />

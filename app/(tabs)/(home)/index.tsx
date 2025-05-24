@@ -1,3 +1,4 @@
+import { useUserProfileStore } from '@/store/userProfileStore';
 import { Ionicons, Octicons } from '@expo/vector-icons';
 import BottomSheetModal from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetModal';
 import { Image } from "expo-image";
@@ -8,26 +9,36 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Feature from "../../../components/Feature";
 import SettingsBottomSheet from "../../../components/settingsBottomSheet";
 import { allFeatures, FeatureItem } from "../../../ExportedArrays";
+// import Purchases from 'react-native-purchases';
+// import { deviceInformation } from '@/HelperFunctions';
+// import { isTestFlightBuild } from '@/config';
+// import { callSuperwall } from '@/api/CallSuperwall';
 
 const Home = () => {
 
-    const [isUser, setIsUser] = React.useState(true);
+    const params = useLocalSearchParams<Record<string, string>>();
+    // const [isUser, setIsUser] = React.useState(true);
 
     const navigation = useNavigation();
     const bottomSheetRef = React.useRef<BottomSheetModal>(null);
 
+    const { userProfile } = useUserProfileStore();
+
+    const exsistingUser = params?.brandNewUser === "true" && !userProfile?.begunOnboarding ? false : true;
+
+    
     // HEADER NAVIGATION
     React.useLayoutEffect(() => {
         navigation.setOptions({
             headerTitle: "",
             headerLeft: () => (
-                <TouchableOpacity style={{ opacity: isUser ? 1 : 0.5 }} disabled={isUser ? false : true} 
+                <TouchableOpacity style={{ opacity: exsistingUser ? 1 : 0.5 }} disabled={exsistingUser ? false : true} 
                     onPress={() => router.push("/chatHistory")}>
                     <Octicons name="history" size={24} color="white" />
                 </TouchableOpacity>
             ),
             headerRight: () => (
-                <TouchableOpacity style={{ opacity: isUser ? 1 : 0.5 }} onPress={() => bottomSheetRef.current?.expand()}>
+                <TouchableOpacity style={{ opacity: exsistingUser ? 1 : 0.5 }} onPress={() => bottomSheetRef.current?.expand()}>
                     <Ionicons name="menu-sharp" size={30} color="white" />
                 </TouchableOpacity>
             ),
@@ -36,6 +47,28 @@ const Home = () => {
 			},
             headerShadowVisible: false
         });
+    }, []);
+
+
+    // SHOW PAYWALL
+    React.useEffect(() => {
+        // const checkStatus = async () => {
+        //     try {
+        //         const customerInfo = await Purchases.getCustomerInfo();
+        //         if (typeof customerInfo?.entitlements?.active?.["proaccess"] !== "undefined") {
+        //             return;
+        //         };
+
+        //         if (!isTestFlightBuild) {
+        //             if (deviceInformation.deviceId) {
+        //                 callSuperwall(deviceInformation.deviceId);
+        //             };
+        //         };
+
+        //     } catch (e) {}
+        // };
+
+        // if (exsistingUser) checkStatus();
     }, []);
 
     
@@ -53,6 +86,7 @@ const Home = () => {
 
     const AnimatedImage = Animated.createAnimatedComponent(Image);
 
+    // console.log(allFeatures.splice(1, 1));
     return (
         <GestureHandlerRootView style={styles.contentContainer}>
             <View style={styles.backgroundContainer}>
@@ -65,11 +99,11 @@ const Home = () => {
 
             <View style={styles.listContainer}>
                 <FlatList
-                    data={isUser ?allFeatures.slice(1) : allFeatures}
+                    data={exsistingUser ? allFeatures.slice(1) : [allFeatures[0], ...allFeatures.slice(2)]}
                     showsVerticalScrollIndicator={false}
-                    scrollEnabled={isUser}
+                    scrollEnabled={exsistingUser}
                     renderItem={({ item, index }: { item: FeatureItem; index: number }) => (
-                        isUser ? (
+                        exsistingUser ? (
                             <Feature 
                                 key={index} 
                                 title={item.title}

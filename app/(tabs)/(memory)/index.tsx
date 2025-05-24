@@ -1,49 +1,30 @@
+import { memoryApi } from '@/api/MemoryApi';
+import { wait } from '@/HelperFunctions';
 import { handleEnableFaceId } from '@/utils/faceIdAuth';
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { Image } from 'expo-image';
 import { useNavigation } from 'expo-router';
 import React from 'react';
-import { Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button } from '../../../components/Button';
 import { EPMText, EPRText, EPSBText } from '../../../StyledText';
 
-const privateMemoryData = [
-  {
-    id: '1',
-    memory: 'Chike is interested in making new friends after moving to Sweden for his masters degree programme in biotechnology.'
-  },
-  {
-    id: '2',
-    memory: 'Chike is interested in making new friends after moving to Sweden for his masters degree programme in biotechnology.'
-  },
-  {
-    id: '3',
-    memory: 'Chike is interested in making new friends after moving to Sweden for his masters degree programme in biotechnology.'
-  },
-  {
-    id: '4',
-    memory: 'User is allergic to peanuts and has mentioned this several times when discussing food.'
-  },
-  {
-    id: '5',
-    memory: 'User enjoys hiking on weekends, particularly in national parks.'
-  },
-  {
-    id: '6',
-    memory: 'User shared they are learning to play the guitar and practicing daily.'
-  },
-  {
-    id: '7',
-    memory: 'User mentioned their sister is expecting a baby in December.'
-  }
-];
+interface PrivateMemory {
+    id: string;
+    memory: string;
+};
 
 const PrivateMemory = () => {
 
+    const [loading, setLoading] = React.useState<boolean>(true);
     const [locked, setLocked] = React.useState(true);
-    const [privateMemories, setPrivateMemories] = React.useState(privateMemoryData);
+    const [privateMemories, setPrivateMemories] = React.useState<PrivateMemory[]>([]);
+    const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
     const navigation = useNavigation();
+
+    /// TODO: TRACK IN MIXPANEL WHEN MEMORY GETS UNLOCKED, AND WHEN MEMORY IS DELETED
+
 
     // HEADER NAVIGATION
     React.useLayoutEffect(() => {
@@ -57,6 +38,16 @@ const PrivateMemory = () => {
     }, []);
 
 
+    // LOCK MEMORY WHEN NAVIGATED AWAY
+    // useFocusEffect(
+    //     React.useCallback(() => {
+    //         return () => {
+    //             setLocked(true);
+    //         };
+    //     }, [])
+    // );
+
+
     // ALERT DELETE FROM PRIVATE MEMORY
     const alertDelete = (id: string) => {
         if (id === "9999") {
@@ -68,7 +59,7 @@ const PrivateMemory = () => {
             return;
         };
         
-        Alert.alert("DANGER ZONE!!!", "Are you sure you want to delete this private memory?", [
+        Alert.alert("Delete Memory", "Are you sure you want to delete this private memory?", [
             { text: "Cancel", style: "cancel" },
             { text: "Delete", style: "destructive", onPress: () => deleteFromPrivateMemory(id) }
         ]);
@@ -76,21 +67,61 @@ const PrivateMemory = () => {
 
 
     // DELETE FROM PRIVATE MEMORY
-    const deleteFromPrivateMemory = (id: string) => {
-        setPrivateMemories(privateMemories.filter((item) => item.id !== id));
+    const deleteFromPrivateMemory = async (id: string) => {
+        try {
+            setDeletingId(id);
+            await memoryApi({ memoryIdForDeletion: id }, "deleteMemory");
+            await wait(1000);
+            setPrivateMemories(privateMemories.filter((item) => item.id !== id));
+            setDeletingId(null);
+        } catch (error) {
+            setDeletingId(null);
+            await wait(2000);
+            Alert.alert("Oops!", "We're working on a fix, please try again later.");
+        }
     };
 
 
     // HANDLE CLEAR PRIVATE MEMORY
-    const handleClearPrivateMemory = () => {
-        setPrivateMemories([]);
+    const handleClearPrivateMemory = async () => {
+        setLoading(true);
+
+        try {
+            await memoryApi({}, "deleteAllMemories");
+            await wait(1000);
+
+            setLoading(false);
+            setPrivateMemories([]);
+        } catch (error) {
+            await wait(2000);
+            setLoading(false);
+            Alert.alert("Oops!", "We're working on a fix, please try again later.");
+        }
     };
 
 
+    // HANDLE UNLOCK WITH FACE ID
     const handleUnlockWithFaceID = async () => {
         const result = await handleEnableFaceId();
+
         if (result.success) {
             setLocked(false);
+
+            try {
+                const response = await memoryApi({}, "getMemories");
+                if (response) {
+                    const data = await response.json();
+
+                    setPrivateMemories(data);
+                    setLoading(false);
+                };
+
+            } catch (error) {
+                console.log("error", error);
+                await wait(3000);
+				setLoading(false);
+				Alert.alert("Oops!", "We're working on a fix, please try again later.");
+            }
         };
     };
 
@@ -127,36 +158,45 @@ const PrivateMemory = () => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.contentContainer}
             >
-                {privateMemories.length > 0 ? (
-                    <View style={styles.memoryContainer}>
-                        {privateMemories.map((item, index) => (
-                            <React.Fragment key={item.id}>
-                                <View style={styles.memoryItem}>
-                                    <EPMText style={styles.memoryText}>
-                                        {item.memory}
-                                    </EPMText>
-    
-                                    <TouchableOpacity onPress={() => alertDelete(item.id)} style={styles.trashButton}>
-                                        <EvilIcons name="trash" size={24} color="white" />
-                                    </TouchableOpacity>
-                                </View>
-    
-                                {index < privateMemories.length - 1 && (
-                                    <View style={styles.divider} />
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </View>
+                {loading ? (
+                    <ActivityIndicator size="small" style={{ top: "45%" }} color="white" />
                 ) : (
-                    <View style={styles.noPrivateMemoriesContainer}>
-                        <EPSBText style={styles.noPrivateMemoriesText}>
-                            No private memories yet
-                        </EPSBText>
-                    </View>
+                    privateMemories.length > 0 ? (
+                        <View style={styles.memoryContainer}>
+                            {privateMemories.map((item, index) => (
+                                <React.Fragment key={item.id}>
+                                    <View style={styles.memoryItem}>
+                                        <EPMText style={styles.memoryText}>
+                                            {item.memory}
+                                        </EPMText>
+        
+                                        <TouchableOpacity onPress={() => alertDelete(item.id)} 
+                                            style={styles.trashButton} disabled={deletingId === item.id}>
+                                            {deletingId === item.id ? (
+                                                <ActivityIndicator size="small" color="white" />
+                                            ) : (
+                                                <EvilIcons name="trash" size={24} color="white" />
+                                            )}
+                                        </TouchableOpacity>
+                                    </View>
+        
+                                    {index < privateMemories.length - 1 && (
+                                        <View style={styles.divider} />
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </View>
+                    ) : (
+                        <View style={styles.noPrivateMemoriesContainer}>
+                            <EPSBText style={styles.noPrivateMemoriesText}>
+                                No private memories yet
+                            </EPSBText>
+                        </View>
+                    )
                 )}
             </ScrollView>
 
-           <TouchableOpacity style={[styles.buttonContainer, { display: privateMemories.length > 0 ? "flex" : "none" } ]}
+           <TouchableOpacity style={[styles.buttonContainer, { display: privateMemories.length > 0 && !loading ? "flex" : "none" } ]}
                 onPress={() => alertDelete("9999")}>
                 <EPRText color="#FF5252" style={styles.text}>
                     Clear Private Memory

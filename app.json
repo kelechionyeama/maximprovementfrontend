@@ -15,6 +15,8 @@
         },
 		"ios": {
             "supportsTablet": true,
+			"googleServicesFile": "./GoogleService-Info.plist",
+            "bundleIdentifier": "com.kelechionyeama.askmax",
             "infoPlist": {
                 "NSFaceIDUsageDescription": "This app uses Face ID to authenticate access to private memory"
             }
@@ -33,15 +35,17 @@
 		},
 		"plugins": [
 			"expo-router",
+	
 			[
 				"expo-splash-screen",
 				{
 					"image": "./assets/images/splash-icon.png",
 					"imageWidth": 200,
 					"resizeMode": "contain",
-					"backgroundColor": "#ffffff"
+					"backgroundColor": "#000000"
 				}
 			]
+			
 		],
 		"experiments": {
 			"typedRoutes": true

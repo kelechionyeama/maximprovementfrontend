@@ -1,16 +1,15 @@
-import { BASE_URL, appInfo } from "@/config";
 import { deviceInformation } from "@/HelperFunctions";
+import { appInfo, BASE_URL } from "../config";
 
-// EDIT USER PROFILE
-export const getDefaultRepliesApi = async (payload: any = {}) => {
+export const sendPaywallData = async (payload: any = {}, endpoint: string) => {
     try {
         const deviceId = deviceInformation.deviceId;
-		const deviceBrand = deviceInformation.deviceBrand;
+        const deviceBrand = deviceInformation.deviceBrand;
 
         // const uid = payload.uid || auth.currentUser?.uid;
         const uid = "TEMPUID";
 
-        const response = await fetch(`${BASE_URL}/defaultquestions`, {
+        const response = await fetch(`${BASE_URL}/paywall/${endpoint}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -25,6 +24,8 @@ export const getDefaultRepliesApi = async (payload: any = {}) => {
             })
         });
 
-        return response;
-    } catch (e) {};
+        return { ok: response.ok, data: await response.json() };
+    } catch (e) {
+        return { ok: false, error: e };
+    }
 };

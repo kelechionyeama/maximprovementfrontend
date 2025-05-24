@@ -1,3 +1,4 @@
+import { sendOnboardingData } from '@/api/OnboardingApi';
 import { Button } from '@/components/Button';
 import OptionsSelector from '@/components/OptionsSelector';
 import PrivateMemoryBox from '@/components/PrivateMemoryBoxes';
@@ -6,8 +7,10 @@ import { handleEnableFaceId } from '@/utils/faceIdAuth';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from 'expo-router';
 import React from 'react';
-import { Animated, FlatList, Keyboard, KeyboardAvoidingView, Platform,
-    SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+    Animated, FlatList, Keyboard, KeyboardAvoidingView, Platform,
+    SafeAreaView, StyleSheet, TextInput, TouchableOpacity, View
+} from 'react-native';
 import { LoadingBubble } from '../components/chat/loadingBubble';
 import MaxText from '../components/chat/max';
 import YouText from '../components/chat/you';
@@ -97,6 +100,11 @@ const GetSetUpChat = () => {
     }, []);
 
 
+    const scrollToEnd = () => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+    };
+
+
     // HANDLE KEYBOARD SEND BUTTON
     const handleSend = async () => {
         if (userName.trim()) {
@@ -115,6 +123,12 @@ const GetSetUpChat = () => {
             // SHOW LOADING STATE
             await wait(500);  
             setLoading(true);
+
+            // SEND ONBOARDING DATA
+            await sendOnboardingData({
+                screen: "getName",
+                firstName: userName.trim()
+            }, "logQuestions");
             
             // AFTER 1.5 SECONDS, SHOW THE RESPONSE AND HIDE LOADING
             await wait(2500);     
@@ -150,8 +164,13 @@ const GetSetUpChat = () => {
         }]);
 
         await wait(1000);
+        setLoading(true); 
 
-        setLoading(true);       
+        // SEND ONBOARDING DATA
+        await sendOnboardingData({ 
+            screen: "iWasCreated"
+        }, "logQuestions");
+        
         await wait(2500);
 
         setChatConversation(prev => [
@@ -195,12 +214,13 @@ const GetSetUpChat = () => {
             }
         ]);
 
-        await wait(200);
-        flatListRef.current?.scrollToEnd({ animated: true });
-
         setLoading(true);
-        await wait(200);
-        flatListRef.current?.scrollToEnd({ animated: true });
+
+        // SEND ONBOARDING DATA
+        await sendOnboardingData({
+            screen: "whatDoYouNeed",
+            problemsToSolve: selectedOption
+        }, "logQuestions");
 
         await wait(1500);
 
@@ -210,9 +230,6 @@ const GetSetUpChat = () => {
                 isUser: false
             }
         ]);
-
-        await wait(200);
-        flatListRef.current?.scrollToEnd({ animated: true });
 
         setMaxIsStreaming(true);
         setLoading(false);
@@ -225,15 +242,19 @@ const GetSetUpChat = () => {
 
         setChatConversation(prev => [...prev,
             { 
-                text: text,
+                text,
                 isUser: true
             }
         ]);
 
-        await wait(200);
-        flatListRef.current?.scrollToEnd({ animated: true });
+        setLoading(true);      
+          
+        // SEND ONBOARDING DATA
+        await sendOnboardingData({
+            screen: "howLongHaveYouBeenStruggling",
+            howLongHaveYouBeenStruggling: text
+        }, "logQuestions");
 
-        setLoading(true);
         await wait(1500);
 
         setChatConversation(prev => [...prev,
@@ -243,9 +264,6 @@ const GetSetUpChat = () => {
             }
         ]);
 
-        await wait(200);
-        flatListRef.current?.scrollToEnd({ animated: true });
-
         setMaxIsStreaming(true);
         setLoading(false);
     };
@@ -253,8 +271,6 @@ const GetSetUpChat = () => {
 
     // HANDLE OPEN TO FAMILY TALKS OPTION PRESS
     const handleFamilyOptionPress = async (open: boolean) => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-
         setChatConversation(prev => [
             ...prev,
             { 
@@ -263,11 +279,14 @@ const GetSetUpChat = () => {
             }
         ]);
 
-        await wait(100);
-        flatListRef.current?.scrollToEnd({ animated: true });
-
         setShowFamilyOptions(false);
         setLoading(true);
+
+        // SEND ONBOARDING DATA
+        await sendOnboardingData({
+            screen: "openToFamilyTalks",
+            openToFamilyTalks: open
+        }, "logQuestions");
  
         await wait(1500);
 
@@ -284,9 +303,6 @@ const GetSetUpChat = () => {
             }
         ]);
 
-        await wait(300);
-        flatListRef.current?.scrollToEnd({ animated: true });
-
         setMaxIsStreaming(true);
         setLoading(false);
     };
@@ -299,6 +315,11 @@ const GetSetUpChat = () => {
             setPrivateMemoryBoxIsLocked(false);
             setShowUnlockButton(false);
 
+            // SEND ONBOARDING DATA
+            await sendOnboardingData({
+                screen: "privateMemoryUnlocked"
+            }, "logQuestions");
+
             await wait(3000);
             setShowContinueAfterPrivateMemoryBox(true);
         };
@@ -308,9 +329,6 @@ const GetSetUpChat = () => {
     // HANDLE CONTINUE AFTER VIEWING PRIVATE MEMORY BOX
     const handleContinueAfterPrivateMemoryBox = async () => {
         setLoading(true);
-        await wait(200);
-        flatListRef.current?.scrollToEnd({ animated: true });
-
         setShowContinueAfterPrivateMemoryBox(false);
 
         setChatConversation(prev => [...prev,
@@ -320,11 +338,13 @@ const GetSetUpChat = () => {
             }
         ]);
 
-        await wait(200);
-        flatListRef.current?.scrollToEnd({ animated: true });
-
         setMaxIsStreaming(true);
         setLoading(false);
+
+        // SEND ONBOARDING DATA
+        await sendOnboardingData({
+            screen: "viewedPrivateMemory"
+        }, "logQuestions");
     };
 
 
@@ -333,16 +353,18 @@ const GetSetUpChat = () => {
         await leaveRating();
         await wait(2000);
         setShowInnerRate5StarsButton(false);
+
+        // SEND ONBOARDING DATA
+        await sendOnboardingData({
+            screen: "rated5Stars"
+        }, "logQuestions");
     };
 
 
     // HANDLE I HAVE RATED BUTTON PRESS
     const handleIHaveRated = async () => {
         setShowRate5StarsButton(false);
-
         setLoading(true);
-        await wait(200);
-        flatListRef.current?.scrollToEnd({ animated: true });
 
         setChatConversation(prev => [...prev,
             { 
@@ -351,14 +373,13 @@ const GetSetUpChat = () => {
             }
         ]);
 
-        await wait(200);
-        flatListRef.current?.scrollToEnd({ animated: true });
-
         setMaxIsStreaming(true);
         setLoading(false);
 
-        await wait(200);
-        flatListRef.current?.scrollToEnd({ animated: true });
+        // SEND ONBOARDING DATA
+        await sendOnboardingData({
+            screen: "onboardingComplete"
+        }, "logQuestions");
     };
 
 
@@ -375,7 +396,7 @@ const GetSetUpChat = () => {
             )
         ).start(() => {
             // AFTER EACH ANIMATION IN THE STAGGER COMPLETES:
-            flatListRef.current?.scrollToEnd({ animated: true });
+            scrollToEnd();
         });
     }, [optionOpacities]);
 
@@ -428,25 +449,12 @@ const GetSetUpChat = () => {
     const handleFamilyQuestionComplete = async () => {
         setMaxIsStreaming(false);
 
-        await wait(100);
-        flatListRef.current?.scrollToEnd({ animated: true });
-
         setShowFamilyOptions(true);
         Animated.timing(familyOptionsOpacity, {
             toValue: 1,
             duration: 500,
             useNativeDriver: true
         }).start();
-    };
-
-    /**
-     * Default completion handler:
-     * - Simply stops the streaming animation
-     */
-    const handleDefaultComplete = async () => {
-        setMaxIsStreaming(false);
-        await wait(100);
-        flatListRef.current?.scrollToEnd({ animated: true });
     };
 
     /**
@@ -464,7 +472,7 @@ const GetSetUpChat = () => {
         if (isFirstMax) return handleFirstMaxComplete;
         if (isAdviceQuestion) return handleAdviceQuestionComplete;
         if (isFamilyQuestion) return handleFamilyQuestionComplete;
-        return handleDefaultComplete;
+        return () => setMaxIsStreaming(false);
     };
 
 
@@ -476,7 +484,6 @@ const GetSetUpChat = () => {
 
                 if (lastMessage.text.includes("you've been struggling with for a long time")) {
                     await wait(500);
-
                     setShowHowLongHaveYouBeenStruggling(true);
 
                     Animated.timing(howLongHaveYouBeenStrugglingOpacity, {
@@ -484,17 +491,14 @@ const GetSetUpChat = () => {
                         duration: 1000,
                         useNativeDriver: true
                     }).start();
-
-                    await wait(100);
-                    flatListRef.current?.scrollToEnd({ animated: true });
                 };
 
                 // SHOW PRIVATE MEMORY BOX
                 if (lastMessage.showPrivateMemoryBox) {
                     await wait(100);
-                    flatListRef.current?.scrollToEnd({ animated: true });
+                    scrollToEnd();
 
-                    await wait(1000);
+                    await wait(500);
                     setShowPrivateMemoryBox(true);
 
                     Animated.timing(privateMemoryBoxOpacity, {
@@ -504,18 +508,14 @@ const GetSetUpChat = () => {
                     }).start();
 
                     await wait(100);
-                    flatListRef.current?.scrollToEnd({ animated: true });
+                    scrollToEnd();
 
                     setShowUnlockButton(true);
                 };
 
                 // SHOW RATE 5 STARS BUTTON
                 if (lastMessage.text.includes("One last thing")) {
-                    await wait(100);
-                    flatListRef.current?.scrollToEnd({ animated: true });
-
                     await wait(1000);
-
                     setShowRate5StarsButton(true);
                 };
             };
@@ -536,6 +536,7 @@ const GetSetUpChat = () => {
                     contentContainerStyle={styles.flatList}
                     showsVerticalScrollIndicator={false}
                     style={{ marginBottom: 200, paddingHorizontal: 10 }}
+                    onContentSizeChange={scrollToEnd}
                     ListFooterComponent={loading ? <LoadingBubble flatListRef={flatListRef} /> : null}
                     renderItem={({ item, index }) => {
                         if (item.showPrivateMemoryBox) {
@@ -750,6 +751,7 @@ const styles = StyleSheet.create({
     skipText: {
         fontSize: 16,
         textAlign: "center",
-        opacity: 0.8
+        opacity: 0.8,
+        marginBottom: 20
     }
 });

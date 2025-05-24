@@ -1,14 +1,13 @@
-// import DeviceInfo from "react-native-device-info";
 import { BASE_URL, appInfo, auth } from "@/config";
+import { deviceInformation } from "@/HelperFunctions";
 
 // EDIT USER PROFILE
 export const chatHistoryApi = async (payload: any = {}, action: string = "get") => {
     try {
-        // const deviceId = await DeviceInfo.getUniqueId();
-		// const deviceBrand = DeviceInfo.getBrand();
+        const deviceId = deviceInformation.deviceId;
+        const deviceBrand = deviceInformation.deviceBrand;
+
         // const uid = payload.uid || auth.currentUser?.uid;
-        const deviceId = "TEMPDEVICEID";
-		const deviceBrand = "TEMPDEVICEBRAND";
         const uid = "TEMPUID";
 
         const response = await fetch(`${BASE_URL}/${action}/chathistory`, {

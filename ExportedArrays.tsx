@@ -40,11 +40,6 @@ export const allFeatures: FeatureItem[] = [
         icon: require("@/assets/icons/bullseye.png"),
         params: "influencingPeople"
     },
-    // {
-    //     title: "Controversial Opinions",
-    //     icon: require("@/assets/icons/poolball.svg"),
-    //     params: "controversialOpinions"
-    // },
     {
         title: "Finding motivation",
         icon: require("@/assets/icons/rockstarHand.png"),

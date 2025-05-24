@@ -2,15 +2,15 @@ import { BASE_URL, appInfo } from "@/config";
 import { deviceInformation } from "@/HelperFunctions";
 
 // EDIT USER PROFILE
-export const getDefaultRepliesApi = async (payload: any = {}) => {
+export const memoryApi = async (payload: any = {}, action: string) => {
     try {
         const deviceId = deviceInformation.deviceId;
-		const deviceBrand = deviceInformation.deviceBrand;
+        const deviceBrand = deviceInformation.deviceBrand;
 
         // const uid = payload.uid || auth.currentUser?.uid;
         const uid = "TEMPUID";
 
-        const response = await fetch(`${BASE_URL}/defaultquestions`, {
+        const response = await fetch(`${BASE_URL}/${action}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

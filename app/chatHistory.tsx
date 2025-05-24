@@ -150,17 +150,24 @@ const ChatHistory = () => {
 
 	// CLEAR CHAT HISTORY
 	const clearChatHistory = async () => {
+		setLoading(true);
+		
 		try {
 			const response = await chatHistoryApi({}, "clear");
 			const data = await response?.json();
 
 			if (data?.success) {
+				await wait(1000);
 				setChatHistory([]);
 				setLoading(false);
 			} else {
 				Alert.alert("Oops!", "Something went wrong. Please try again later.");
 			}
-		} catch (error) {}
+		} catch (error) {
+			await wait(2000);
+			setLoading(false);
+			Alert.alert("Oops!", "Something went wrong. Please try again later.");
+		}
 	};
 
 
@@ -186,7 +193,8 @@ const ChatHistory = () => {
 				)
 			)}
 
-            <TouchableOpacity style={styles.buttonContainer} onPress={alertClearChatHistory}>
+            <TouchableOpacity style={[styles.buttonContainer, { display: chatHistory.length > 0 && !loading ? "flex" : "none" }]} 
+				onPress={alertClearChatHistory}>
                 <EPRText color="#FF5252" style={styles.text}>
                     Clear Chat History
                 </EPRText>

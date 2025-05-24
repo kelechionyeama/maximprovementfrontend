@@ -2,6 +2,14 @@ import * as Haptics from "expo-haptics";
 import * as StoreReview from "expo-store-review";
 import { Linking, Platform } from "react-native";
 import { appInfo } from "./config";
+import DeviceInfo from "react-native-device-info";
+
+export const deviceInformation = {
+    // deviceId: await DeviceInfo.getUniqueId(),
+    // deviceBrand: await DeviceInfo.getBrand()
+    deviceId: "TEMPDEVICEID",
+    deviceBrand: "TEMPDEVICEBRAND"
+};
 
 // DELAY FOR A VARIABLE TIME
 export function wait(timeout: number) {
@@ -128,3 +136,51 @@ export const areAllMessagesFromToday = (chatConversation: { timestamp?: string }
         );
     });
 };
+
+// EXTRACT PRICE FROM STRING FOR SUPERWALL
+export const extractPrice = (input: string): number | null => {
+    const validPrices = [
+        2.99, 6.99, 9.99, 19.99, 39.99, 49.99, 50, 59.99, 79.99
+    ];
+  
+    // CREATE A REGEX THAT MATCHES ALL VALID PRICES (ESCAPED FOR DECIMAL)
+    const priceRegex = new RegExp(validPrices
+        ?.map(price => price.toString()?.replace('.', '\\.'))
+        ?.join('|'));
+  
+    const match = input?.match(priceRegex);
+    
+    if (match) {
+        return parseFloat(match[0]);
+    };
+  
+    return null;
+};
+
+// GENERATE SUMMARY FOR PRIVATE MEMORY BOX
+export function generateSummary(name: string, selections: string[]) {
+    const topicsMap: Record<string, string> = {
+        "Exploring my personality": "exploring his personality",
+        "Making friends": "making friends",
+        "Getting people to like me": "getting liked",
+        "Dating & relationships": "dating",
+        "Influencing people": "influencing people",
+        "Finding motivation": "finding motivation",
+        "Upgrading my style": "upgrading his style",
+        "Getting fit fast": "getting fit"
+    };
+  
+    const transformed = selections.map(item => topicsMap[item]);
+  
+    if (transformed.length === 0) return `${capitalizeFirst(name)} hasn't selected any topics yet.`;
+  
+    if (transformed.length === 1) return `${capitalizeFirst(name)} needs advice on ${transformed[0]}.`;
+  
+    const last = transformed.pop();
+    return `${capitalizeFirst(name)} needs advice on ${transformed.join(", ")} and ${last}.`;
+};  
+
+// CAPITALIZE FIRST LETTER
+export const capitalizeFirst = (str: string): string => {
+    return str?.charAt(0)?.toUpperCase() + str?.slice(1);
+};  

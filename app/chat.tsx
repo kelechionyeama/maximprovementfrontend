@@ -9,14 +9,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React from 'react';
-import {
-    Animated, FlatList, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView,
-    StyleSheet, TextInput, TouchableOpacity, View
-} from 'react-native';
+import { Animated, FlatList, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView,
+    StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import MaxText from '../components/chat/max';
 import YouText from '../components/chat/you';
 import { EPBText } from '../StyledText';
-import { isTestFlightBuild } from '@/config'; 
+import { isTestFlightBuild } from '@/config';
+import { useUserProfileStore } from "@/store/userProfileStore";
 
 interface ChatMessage {
     text: string;
@@ -43,6 +42,7 @@ const Chat = () => {
 
     const navigation = useNavigation();
 
+    const { userProfile } = useUserProfileStore();
     const { defaultReplies } = useDefaultRepliesStore();
     const openingText = defaultReplies?.[feature?.params]?.openingText ?? "";
     const chatHistory = feature?.chatHistory;
@@ -128,6 +128,7 @@ const Chat = () => {
 
         // SEND MESSAGE TO SERVER
         const response = await chatApi({
+            firstName: userProfile?.firstName,
             message,
             messageId: chatHistory ? chatHistory?.id : messageId,
             feature: feature?.params,
@@ -223,7 +224,7 @@ const Chat = () => {
                     contentContainerStyle={styles.flatList}
                     showsVerticalScrollIndicator={false}
                     style={{ marginBottom: 20, paddingBottom: 10 }}
-                    ListFooterComponent={loading ? <LoadingBubble /> : null}
+                    ListFooterComponent={loading ? <LoadingBubble loadFaster={true} /> : null}
                     onContentSizeChange={scrollToEnd}
                     onScrollBeginDrag={Keyboard.dismiss}
                     nestedScrollEnabled
